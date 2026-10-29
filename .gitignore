@@ -1,0 +1,16 @@
+# Claves de Supabase (se generan con scripts/generar-config.js)
+js/config.js
+.env
+.env.*
+
+# Dependencias y carpetas locales
+node_modules/
+.vercel/
+.superpowers/
+
+# Archivos del sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
