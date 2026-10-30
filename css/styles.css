@@ -172,20 +172,26 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------- 5b. Datos rápidos y cómo reservar ---------- */
 .datos { position: relative; z-index: 2; margin-top: -40px; }
-.datos__fila { display: grid; gap: 12px; }
-.dato {
-  display: grid; grid-template-columns: 46px minmax(0, 1fr); column-gap: 14px; row-gap: 0; align-items: center;
-  padding: 16px; background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--radio);
-  box-shadow: 0 1px 2px rgba(15, 43, 61, 0.06), 0 22px 34px -22px rgba(15, 43, 61, 0.55);
+/* Una sola barra blanca con tres columnas separadas por líneas */
+.datos__fila {
+  display: grid; overflow: hidden;
+  background: var(--blanco); border: 1px solid var(--linea); border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(15, 43, 61, 0.06), 0 26px 40px -26px rgba(15, 43, 61, 0.6);
 }
+.dato {
+  display: grid; grid-template-columns: 48px minmax(0, 1fr); column-gap: 16px; align-content: start; align-items: start;
+  padding: 18px 20px;
+}
+.dato + .dato { border-top: 1px solid var(--linea); }
 .dato::before {
-  content: ''; grid-row: 1 / span 2; width: 46px; height: 46px; border-radius: 14px;
+  content: ''; grid-row: 1 / span 3; width: 48px; height: 48px; border-radius: 14px;
   background: #FFF0DB var(--icono-dato) center / 24px no-repeat;
 }
 .dato > * { grid-column: 2; }
-.dato__titulo { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gris); }
-.dato__texto { font-weight: 500; line-height: 1.4; }
-.dato__texto a { text-underline-offset: 3px; }
+.dato__titulo { font-size: 0.74rem; font-weight: 600; line-height: 1.3; letter-spacing: 0.07em; text-transform: uppercase; color: var(--gris); }
+.dato__texto { margin-top: 3px; font-weight: 600; line-height: 1.35; }
+.dato__texto a { text-underline-offset: 3px; text-decoration-color: var(--naranja); text-decoration-thickness: 2px; }
+.dato__nota { margin-top: 1px; font-size: 0.9rem; line-height: 1.35; color: var(--gris); }
 .dato--reloj { --icono-dato: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23C25E00' d='M12 2C6.5 2 2 6.5 2 12s4.500 10 10 10 10-4.500 10-10S17.500 2 12 2zm0 18c-4.400 0-8-3.600-8-8s3.600-8 8-8 8 3.600 8 8-3.600 8-8 8zm.5-13H11v6l5.250 3.150.75-1.230-4.500-2.670V7z'/%3E%3C/svg%3E"); }
 .dato--pin { --icono-dato: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23C25E00' d='M12 2C8.100 2 5 5.100 5 9c0 5.250 7 13 7 13s7-7.750 7-13c0-3.900-3.100-7-7-7zm0 9.500c-1.400 0-2.500-1.100-2.500-2.500s1.100-2.500 2.500-2.500 2.500 1.100 2.500 2.500-1.100 2.500-2.500 2.500z'/%3E%3C/svg%3E"); }
 .dato--chat { --icono-dato: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23C25E00' d='M20 2H4c-1.100 0-2 .9-2 2v18l4-4h14c1.100 0 2-.9 2-2V4c0-1.100-.9-2-2-2z'/%3E%3C/svg%3E"); }
@@ -582,8 +588,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
     border: 2px dashed rgba(242, 140, 40, 0.22); border-radius: 50%; transform: translateY(-50%); pointer-events: none;
   }
   .datos { margin-top: -56px; }
-  .datos__fila { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-  .dato { padding: 20px; }
+  .datos__fila { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dato { padding: 22px 24px; }
+  .dato + .dato { border-top: 0; border-left: 1px solid var(--linea); }
   .mesas { grid-template-columns: repeat(4, 1fr); }
   .modal__caja { max-width: 900px; }
   .modal__caja--chica { max-width: 560px; }
