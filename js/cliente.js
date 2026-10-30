@@ -111,21 +111,52 @@ function pintarHorarioHoy() {
 // ---------------------------------------------------------------------
 // Mesas (RF-01)
 // ---------------------------------------------------------------------
-// Dibujo de la mesa vista desde arriba: una silla por cada persona.
-function planoMesa(capacidad) {
+// Dibujo de la mesa vista desde arriba, con volumen: sombra en el piso, borde y brillo
+// en la mesa, un plato y una silla con respaldo por cada persona, y una pizza al centro.
+// Los colores salen del CSS según el estado de la mesa (libre, ocupada o cerrada).
+function planoMesa(capacidad, id) {
   const cx = 80;
   const cy = 50;
-  const radioMesa = Math.min(12 + capacidad * 2, 28);
-  const radioSillas = radioMesa + 11;
-  const tamano = capacidad > 10 ? 4 : 6;
-  const sillas = Array.from({ length: capacidad }, (_, i) => {
+  const radioMesa = Math.min(Math.round(14 + capacidad * 1.9), 28);
+  const radioSillas = radioMesa + 12;
+  const ancho = capacidad > 10 ? 8 : 12; // ancho de cada silla
+  const alto = capacidad > 10 ? 7 : 9;
+  const punto = (radio, angulo) => [cx + radio * Math.cos(angulo), cy + radio * Math.sin(angulo)];
+
+  // Una silla por persona, repartidas en círculo; el respaldo queda hacia afuera.
+  const lugares = Array.from({ length: capacidad }, (_, i) => {
     const angulo = (i / capacidad) * 2 * Math.PI - Math.PI / 2;
-    const x = (cx + radioSillas * Math.cos(angulo)).toFixed(1);
-    const y = (cy + radioSillas * Math.sin(angulo)).toFixed(1);
-    return `<circle class="plano__silla" cx="${x}" cy="${y}" r="${tamano}"></circle>`;
-  }).join('');
-  return `<svg class="mesa__plano" viewBox="0 0 160 100" role="img" aria-label="Mesa para ${capacidad} personas">
-    ${sillas}<circle class="plano__mesa" cx="${cx}" cy="${cy}" r="${radioMesa}"></circle></svg>`;
+    return { angulo, grados: (angulo * 180) / Math.PI + 90, silla: punto(radioSillas, angulo), plato: punto(radioMesa - 8, angulo) };
+  });
+  const asiento = `x="${-ancho / 2}" y="${-alto / 2}" width="${ancho}" height="${alto}" rx="3"`;
+  const respaldo = `x="${-ancho / 2}" y="${-alto / 2 - 3.6}" width="${ancho}" height="3.8" rx="1.9"`;
+  const sombras = lugares.map((l) => `<rect class="plano__sombra" ${asiento} transform="translate(${(l.silla[0] + 1.4).toFixed(1)} ${(l.silla[1] + 2.4).toFixed(1)}) rotate(${l.grados.toFixed(1)})"></rect>`).join('');
+  const sillas = lugares.map((l) => `<g transform="translate(${l.silla[0].toFixed(1)} ${l.silla[1].toFixed(1)}) rotate(${l.grados.toFixed(1)})"><rect class="plano__respaldo" ${respaldo}></rect><rect class="plano__silla" ${asiento}></rect></g>`).join('');
+  const platos = lugares.map((l) => `<circle class="plano__plato" cx="${l.plato[0].toFixed(1)}" cy="${l.plato[1].toFixed(1)}" r="3.3"></circle>`).join('');
+
+  // Brillo en el borde de arriba a la izquierda (la luz viene de ahí).
+  const [bx1, by1] = punto(radioMesa - 3.5, (205 * Math.PI) / 180);
+  const [bx2, by2] = punto(radioMesa - 3.5, (255 * Math.PI) / 180);
+
+  // Pizza al centro de la mesa.
+  const radioCentro = radioMesa >= 24 ? 6 : radioMesa >= 20 ? 4.6 : 3.4;
+  const pepperoni = radioCentro >= 4.6
+    ? [[-1, -0.9], [1.1, -0.5], [0, 1.2]].map(([dx, dy]) => `<circle class="plano__pepperoni" cx="${(cx + dx * radioCentro * 0.45).toFixed(1)}" cy="${(cy + dy * radioCentro * 0.45).toFixed(1)}" r="${(radioCentro * 0.2).toFixed(1)}"></circle>`).join('')
+    : '';
+
+  return `<svg class="mesa__plano" viewBox="30 -4 100 108" role="img" aria-label="Mesa para ${capacidad} personas">
+    <defs>
+      <radialGradient id="mesa-sombra-${id}"><stop offset="0.8" class="plano__piso" /><stop offset="1" class="plano__piso plano__piso--fin" /></radialGradient>
+      <radialGradient id="mesa-tapa-${id}" cx="0.35" cy="0.3" r="0.85"><stop offset="0" class="plano__luz" /><stop offset="1" class="plano__oscuro" /></radialGradient>
+    </defs>
+    <circle cx="${cx + 2.5}" cy="${cy + 4}" r="${radioMesa + 7}" fill="url(#mesa-sombra-${id})"></circle>
+    ${sombras}${sillas}
+    <circle class="plano__borde" cx="${cx}" cy="${cy}" r="${radioMesa}" fill="url(#mesa-tapa-${id})"></circle>
+    <path class="plano__brillo" d="M ${bx1.toFixed(1)} ${by1.toFixed(1)} A ${radioMesa - 3.5} ${radioMesa - 3.5} 0 0 1 ${bx2.toFixed(1)} ${by2.toFixed(1)}"></path>
+    ${platos}
+    <circle class="plano__bandeja" cx="${cx}" cy="${cy}" r="${radioCentro}"></circle>
+    <circle class="plano__queso" cx="${cx}" cy="${cy}" r="${(radioCentro - 1.2).toFixed(1)}"></circle>${pepperoni}
+  </svg>`;
 }
 
 function textoEstado(estadoMesa) {
@@ -148,7 +179,7 @@ function pintarMesas() {
     const estadoMesa = estadoMesaHoy(marcarSlots(slots, ocupados, opciones));
     const imagen = mesa.foto_url
       ? `<img src="${escaparHTML(mesa.foto_url)}" alt="Foto de ${escaparHTML(mesa.nombre)}" loading="lazy">`
-      : planoMesa(mesa.capacidad);
+      : planoMesa(mesa.capacidad, mesa.id);
     return `
       <article class="mesa mesa--${estadoMesa}">
         <div class="mesa__imagen">${imagen}</div>
@@ -497,12 +528,12 @@ function pintarCarta() {
   ui.pestanas.innerHTML = grupos.map((g) => `
     <button type="button" class="pestana" role="tab" id="pestana-${g.categoria}" data-categoria="${g.categoria}"
       aria-controls="carta-lista" aria-selected="${g.categoria === estado.categoria}"
-      tabindex="${g.categoria === estado.categoria ? '0' : '-1'}">${g.titulo}</button>`).join('');
+      tabindex="${g.categoria === estado.categoria ? '0' : '-1'}">${g.titulo}<span class="pestana__cuenta" aria-hidden="true">${g.platos.length}</span></button>`).join('');
 
   const grupo = grupos.find((g) => g.categoria === estado.categoria);
   ui.carta.setAttribute('aria-labelledby', `pestana-${grupo.categoria}`);
   ui.carta.innerHTML = grupo.platos.map((p) => `
-    <article class="plato">
+    <article class="plato plato--${p.categoria}">
       <h3 class="plato__nombre">${escaparHTML(p.nombre)}</h3>
       <p class="plato__precio">${formatoPrecio(p.precio)}</p>
       ${p.descripcion ? `<p class="plato__descripcion">${escaparHTML(p.descripcion)}</p>` : ''}

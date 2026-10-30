@@ -160,18 +160,48 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .mesas { display: grid; grid-template-columns: 1fr; gap: 16px; }
 
 .mesa {
+  position: relative; overflow: hidden;
   display: grid; grid-template-columns: 112px 1fr; gap: 14px; align-items: center;
   background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--radio);
-  padding: 12px;
+  padding: 12px 12px 12px 16px;
+  box-shadow: 0 1px 2px rgba(15, 43, 61, 0.06), 0 12px 24px -14px rgba(15, 43, 61, 0.28);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  --acento-estado: var(--ocupado);
 }
+/* Franja de color que avisa el estado de un vistazo */
+.mesa::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--acento-estado); }
+.mesa:hover {
+  transform: translateY(-4px); border-color: #C5D1D8;
+  box-shadow: 0 2px 4px rgba(15, 43, 61, 0.08), 0 20px 34px -16px rgba(15, 43, 61, 0.38);
+}
+.mesa--libre { --acento-estado: var(--libre); }
+.mesa--ocupada { --acento-estado: var(--petroleo); }
+
+/* Fondo de la ilustración: piso con cuadrícula suave y luz al centro */
 .mesa__imagen {
   aspect-ratio: 4 / 3; width: 100%; border-radius: var(--radio-chico); overflow: hidden;
-  background: var(--fondo); display: grid; place-items: center;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(90% 80% at 50% 42%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 100%),
+    linear-gradient(rgba(15, 43, 61, 0.05) 1px, transparent 1px) 0 0 / 18px 18px,
+    linear-gradient(90deg, rgba(15, 43, 61, 0.05) 1px, transparent 1px) 0 0 / 18px 18px,
+    #E9EEF1;
+  box-shadow: inset 0 0 0 1px rgba(15, 43, 61, 0.06);
 }
+.mesa--libre .mesa__imagen { background-color: #FBEFDD; }
 .mesa__imagen img { width: 100%; height: 100%; object-fit: cover; }
-.mesa__plano { width: 100%; height: 100%; }
+.mesa__plano { width: 100%; height: 100%; transition: transform 0.25s ease; }
+.mesa:hover .mesa__plano { transform: scale(1.06) rotate(-2deg); }
 .mesa__datos { display: grid; gap: 6px; justify-items: start; }
+.mesa__datos h3 { font-size: 1.15rem; }
 .mesa__detalle { color: var(--gris); font-size: 0.9rem; }
+.mesa__detalle::before {
+  content: ''; display: inline-block; width: 17px; height: 17px; margin-right: 6px; vertical-align: -3px;
+  background: currentColor;
+  -webkit-mask: var(--icono-personas) center / contain no-repeat;
+  mask: var(--icono-personas) center / contain no-repeat;
+}
+.mesa .boton--borde:hover:not(:disabled) { background: var(--petroleo); border-color: var(--petroleo); color: var(--blanco); }
 
 .estado {
   display: inline-flex; align-items: center; gap: 6px;
@@ -182,29 +212,92 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .estado--ocupada { background: var(--petroleo); color: var(--blanco); }
 .estado--cerrado { background: var(--ocupado-fondo); color: var(--gris); }
 
-/* Plano de la mesa (dibujo SVG que hace cliente.js) */
-.plano__mesa { fill: #C9D4DB; }
-.plano__silla { fill: var(--petroleo); }
-.mesa--libre .plano__mesa { fill: #F7C873; }
+/* Plano de la mesa (dibujo SVG que hace cliente.js).
+   Cada estado cambia solo los colores; la forma es la misma. */
+.mesa {
+  --mesa-luz: #E3E8EC; --mesa-oscuro: #BCC7CE; --mesa-borde: #A3B0B9;
+  --silla-color: #8996A0; --respaldo-color: #6F7F8B; --queso: #D9DFE3;
+}
+.mesa--libre {
+  --mesa-luz: #FFE3AC; --mesa-oscuro: #EDA13F; --mesa-borde: #C77A1B;
+  --silla-color: var(--petroleo-claro); --respaldo-color: var(--petroleo); --queso: #F7C873;
+}
+.mesa--ocupada {
+  --mesa-luz: #B8C6D0; --mesa-oscuro: #6F8797; --mesa-borde: #4F6878;
+  --silla-color: var(--petroleo-claro); --respaldo-color: var(--petroleo); --queso: #C9D4DB;
+}
+.plano__luz { stop-color: var(--mesa-luz); }
+.plano__oscuro { stop-color: var(--mesa-oscuro); }
+.plano__piso { stop-color: #0F2B3D; stop-opacity: 0.3; }
+.plano__piso--fin { stop-opacity: 0; }
+.plano__borde { stroke: var(--mesa-borde); stroke-width: 2; }
+.plano__brillo { fill: none; stroke: #FFFFFF; stroke-opacity: 0.65; stroke-width: 1.8; stroke-linecap: round; }
+.plano__plato { fill: #FFFFFF; stroke: rgba(15, 43, 61, 0.18); stroke-width: 0.8; }
+.plano__bandeja { fill: #FFFFFF; stroke: rgba(15, 43, 61, 0.2); stroke-width: 0.8; }
+.plano__queso { fill: var(--queso); }
+.plano__pepperoni { fill: #B7322A; }
+.plano__sombra { fill: #0F2B3D; fill-opacity: 0.22; }
+.plano__silla { fill: var(--silla-color); stroke: rgba(255, 255, 255, 0.28); stroke-width: 0.7; }
+.plano__respaldo { fill: var(--respaldo-color); }
+
+:root {
+  --icono-personas: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M16 11a3 3 0 100-6 3 3 0 000 6zM8 11a3 3 0 100-6 3 3 0 000 6zm0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13zm8 0c-.3 0-.6 0-1 .1 1.2.8 2 1.9 2 3.4V19h6v-2.5c0-2.3-4.7-3.5-7-3.5z'/%3E%3C/svg%3E");
+}
 
 /* ---------- 8. Carta ---------- */
 .pestanas { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 20px; }
 .pestana {
-  flex: 0 0 auto; min-height: 40px; padding: 8px 18px; border-radius: 999px;
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 8px 12px 8px 18px; border-radius: 999px;
   border: 1px solid var(--linea); background: var(--blanco); color: var(--petroleo);
   font-weight: 500; cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
-.pestana[aria-selected='true'] { background: var(--petroleo); border-color: var(--petroleo); color: var(--blanco); }
+.pestana:hover { border-color: var(--petroleo); }
+.pestana[aria-selected='true'] {
+  background: var(--petroleo); border-color: var(--petroleo); color: var(--blanco);
+  box-shadow: 0 8px 18px -10px rgba(15, 43, 61, 0.6);
+}
+.pestana__cuenta {
+  display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px;
+  border-radius: 999px; background: var(--fondo); color: var(--gris); font-size: 0.78rem; font-weight: 600;
+}
+.pestana[aria-selected='true'] .pestana__cuenta { background: var(--naranja); color: var(--petroleo); }
 
-.carta { display: grid; gap: 0; max-width: 760px; }
+/* Cada plato es una tarjeta con su icono, el nombre, los ingredientes y el precio */
+.carta { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .plato {
-  display: grid; grid-template-columns: 1fr auto; gap: 4px 16px;
-  padding: 16px 0; border-bottom: 1px solid var(--linea);
+  display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; column-gap: 14px; row-gap: 2px; align-items: center;
+  padding: 14px 16px 14px 14px; background: var(--fondo); border: 1px solid transparent; border-radius: var(--radio);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  --icono-plato: var(--icono-pizza);
 }
-.plato:last-child { border-bottom: 0; }
-.plato__nombre { font-weight: 600; }
-.plato__precio { font-weight: 600; color: var(--naranja-texto); white-space: nowrap; }
-.plato__descripcion { grid-column: 1 / -1; color: var(--gris); font-size: 0.92rem; max-width: 60ch; }
+.plato::before {
+  content: ''; grid-row: 1 / span 2; width: 52px; height: 52px; border-radius: 50%;
+  background: var(--blanco) var(--icono-plato) center / 32px no-repeat;
+  box-shadow: 0 0 0 1px var(--linea), 0 6px 12px -8px rgba(15, 43, 61, 0.5);
+}
+.plato:hover {
+  background: var(--blanco); border-color: var(--naranja); transform: translateY(-2px);
+  box-shadow: 0 16px 28px -18px rgba(15, 43, 61, 0.45);
+}
+.plato--entradas { --icono-plato: var(--icono-entrada); }
+.plato--postres { --icono-plato: var(--icono-postre); }
+.plato--bebidas { --icono-plato: var(--icono-bebida); }
+.plato__nombre { grid-column: 2; grid-row: 1; font-weight: 600; font-size: 1.02rem; align-self: end; }
+.plato__descripcion { grid-column: 2; grid-row: 2; color: var(--gris); font-size: 0.9rem; line-height: 1.45; align-self: start; }
+.plato__precio {
+  grid-column: 3; grid-row: 1 / span 2; white-space: nowrap;
+  padding: 5px 12px; border-radius: 999px; background: #FFF0DB; color: #8A4500; font-weight: 700; font-size: 0.95rem;
+}
+
+/* Iconos de la carta (dibujos propios) */
+:root {
+  --icono-pizza: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M12 20 Q24 15 36 20 L26 44 Q24 46.5 22 44 Z' fill='%23D9822B'/%3E%3Cpath d='M9 20 C8 10 17 7 24 7.5 C31 7 40 10 39 20 C35 24 31 21 28 23 C25 25 23 22 20 23 C17 24 13 22 9 20 Z' fill='%23F7C873'/%3E%3Cg fill='%23B7322A'%3E%3Ccircle cx='17' cy='14' r='3.3'/%3E%3Ccircle cx='29' cy='13' r='3'/%3E%3Ccircle cx='23' cy='19' r='2.6'/%3E%3C/g%3E%3C/svg%3E");
+  --icono-entrada: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg fill='%23F2B44C'%3E%3Crect x='14' y='9' width='5' height='20' rx='2'/%3E%3Crect x='21' y='4' width='5' height='25' rx='2'/%3E%3Crect x='28' y='8' width='5' height='21' rx='2'/%3E%3Crect x='34' y='13' width='4' height='16' rx='2'/%3E%3C/g%3E%3Cpath d='M10 25 L38 25 L34.5 43 Q34.3 44.5 33 44.5 L15 44.5 Q13.700 44.5 13.500 43 Z' fill='%23C8432B'/%3E%3C/svg%3E");
+  --icono-postre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M15 26 L33 26 L24 45 Z' fill='%23D9822B'/%3E%3Ccircle cx='24' cy='19' r='10' fill='%23F7C873'/%3E%3Ccircle cx='24' cy='10' r='6.500' fill='%23FBE3B5'/%3E%3Ccircle cx='24' cy='5' r='2.200' fill='%23B7322A'/%3E%3C/svg%3E");
+  --icono-bebida: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M15 17 L33 17 L30.500 43 Q30.400 44.500 29 44.500 L19 44.500 Q17.600 44.500 17.500 43 Z' fill='%23F28C28'/%3E%3Cpath d='M16.200 27 L31.800 27 L30.500 43 Q30.400 44.500 29 44.500 L19 44.500 Q17.600 44.500 17.500 43 Z' fill='%23C8432B' fill-opacity='.35'/%3E%3Crect x='12' y='13.500' width='24' height='4.500' rx='2.200' fill='%230F2B3D'/%3E%3Cpath d='M26 13.500 L29 4 L34 4' fill='none' stroke='%230F2B3D' stroke-width='2.800' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
 
 /* ---------- 9. Pie de página ---------- */
 .pie { background: var(--petroleo); color: rgba(255, 255, 255, 0.8); padding: 40px 0; font-size: 0.92rem; }
@@ -396,9 +489,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- 13. Tablet y computador ---------- */
 @media (min-width: 640px) {
   .mesas { grid-template-columns: repeat(2, 1fr); }
-  .mesa { grid-template-columns: 1fr; padding: 0; overflow: hidden; }
-  .mesa__imagen { border-radius: 0; aspect-ratio: 16 / 10; }
-  .mesa__datos { padding: 4px 16px 16px; }
+  .mesa { grid-template-columns: 1fr; gap: 12px; padding: 0; }
+  .mesa::before { right: 0; bottom: auto; width: auto; height: 5px; z-index: 1; }
+  .mesa__imagen { border-radius: 0; aspect-ratio: 16 / 10; box-shadow: none; }
+  .mesa__datos { padding: 0 16px 16px; }
   .mesa__datos .boton { width: 100%; margin-top: 6px; }
   .hero__pizza { width: 420px; height: 420px; right: -120px; bottom: -150px; }
   .hero__hoy { max-width: 42ch; }
@@ -407,6 +501,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .modal { align-items: center; justify-items: center; padding: 24px; }
   .modal__caja { max-width: 560px; border-radius: var(--radio); }
   .slots { grid-template-columns: repeat(4, 1fr); }
+  .carta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 }
 
 @media (min-width: 900px) {
