@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel de administración de Konys Pizza</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0F2B3D">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="admin-body">
+
+  <!-- Acceso al panel (RF-08) -->
+  <section id="acceso" class="acceso" hidden>
+    <div class="acceso__caja">
+      <div class="acceso__marca"><img src="img/logo.svg" alt="" width="36" height="36"> Konys</div>
+      <h1>Panel de administración</h1>
+      <p class="acceso__texto">Entra con el correo y la contraseña del administrador.</p>
+      <form id="form-acceso" novalidate>
+        <div class="campo">
+          <label for="acceso-correo">Correo</label>
+          <input id="acceso-correo" name="correo" type="email" autocomplete="username" required>
+        </div>
+        <div class="campo">
+          <label for="acceso-clave">Contraseña</label>
+          <input id="acceso-clave" name="clave" type="password" autocomplete="current-password" required>
+        </div>
+        <p class="aviso aviso--error" id="acceso-error" role="alert" hidden></p>
+        <button class="boton boton--oscuro boton--ancho" type="submit" id="acceso-boton">Ingresar</button>
+      </form>
+      <a class="acceso__volver" href="./">Volver a la página de reservas</a>
+    </div>
+  </section>
+
+  <!-- Panel -->
+  <div id="panel" class="panel" hidden>
+    <aside class="panel__lateral">
+      <div class="panel__marca"><img src="img/logo.svg" alt="" width="30" height="30"> Konys <small>Admin</small></div>
+      <nav class="panel__menu" aria-label="Secciones del panel">
+        <button type="button" data-vista="mesas">Mesas</button>
+        <button type="button" data-vista="horarios">Horarios</button>
+        <button type="button" data-vista="reservas">Reservas</button>
+        <button type="button" data-vista="carta">Carta</button>
+      </nav>
+      <button class="boton boton--chico panel__salir" type="button" id="boton-salir">Cerrar sesión</button>
+    </aside>
+
+    <main class="panel__contenido" id="contenido">
+      <!-- Mesas (RF-09, RF-10, RF-13) -->
+      <section id="vista-mesas" class="vista" hidden>
+        <div class="vista__encabezado">
+          <h1>Mesas</h1>
+          <button class="boton boton--acento" type="button" data-accion="nueva-mesa">Nueva mesa</button>
+        </div>
+        <p class="vista__ayuda">Una mesa inactiva no aparece en la página de reservas. Úsalo para mantenimiento, eventos privados o cuando se cierra la terraza.</p>
+        <div class="tabla-caja">
+          <table class="tabla">
+            <thead><tr><th scope="col">Mesa</th><th scope="col">Zona</th><th scope="col">Capacidad</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+            <tbody id="tabla-mesas"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Horarios (RF-11) -->
+      <section id="vista-horarios" class="vista" hidden>
+        <div class="vista__encabezado"><h1>Horarios</h1></div>
+        <p class="vista__ayuda">Cada día tiene dos jornadas. La duración define cada cuánto hay un horario para reservar (con 60 minutos: 12:30, 13:30...). Guarda cada fila después de cambiarla.</p>
+        <div class="tabla-caja">
+          <table class="tabla">
+            <thead><tr><th scope="col">Día</th><th scope="col">Jornada</th><th scope="col">Abre</th><th scope="col">Cierra</th><th scope="col">Duración (min)</th><th scope="col">Abierto</th><th scope="col"><span class="sr">Guardar</span></th></tr></thead>
+            <tbody id="tabla-horarios"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Reservas (RF-12) -->
+      <section id="vista-reservas" class="vista" hidden>
+        <div class="vista__encabezado"><h1>Reservas</h1></div>
+        <form class="filtros" id="form-filtros">
+          <div class="campo">
+            <label for="filtro-fecha">Fecha</label>
+            <input id="filtro-fecha" name="fecha" type="date">
+          </div>
+          <div class="campo">
+            <label for="filtro-mesa">Mesa</label>
+            <select id="filtro-mesa" name="mesa"><option value="">Todas</option></select>
+          </div>
+          <button class="boton boton--oscuro" type="submit">Filtrar</button>
+          <button class="boton boton--borde" type="button" data-accion="limpiar-filtros">Ver todas</button>
+        </form>
+        <div class="tabla-caja">
+          <table class="tabla">
+            <thead><tr><th scope="col">Cliente</th><th scope="col">Mesa</th><th scope="col">Fecha</th><th scope="col">Hora</th><th scope="col">Pers.</th><th scope="col">Estado</th></tr></thead>
+            <tbody id="tabla-reservas"></tbody>
+          </table>
+        </div>
+        <div class="paginacion" id="paginacion"></div>
+      </section>
+
+      <!-- Carta (RF-14) -->
+      <section id="vista-carta" class="vista" hidden>
+        <div class="vista__encabezado">
+          <h1>Carta</h1>
+          <button class="boton boton--acento" type="button" data-accion="nuevo-plato">Nuevo plato</button>
+        </div>
+        <p class="vista__ayuda">Los platos ocultos no se muestran en la carta de la página.</p>
+        <div class="tabla-caja">
+          <table class="tabla">
+            <thead><tr><th scope="col">Plato</th><th scope="col">Categoría</th><th scope="col">Precio</th><th scope="col">En la carta</th><th scope="col">Acciones</th></tr></thead>
+            <tbody id="tabla-platos"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Formulario de mesa -->
+  <div id="modal-mesa" class="modal" hidden>
+    <div class="modal__fondo" data-cerrar></div>
+    <div class="modal__caja modal__caja--chica" role="dialog" aria-modal="true" aria-labelledby="mesa-titulo">
+      <div class="modal__cabecera">
+        <h2 id="mesa-titulo">Nueva mesa</h2>
+        <button class="modal__cerrar" type="button" data-cerrar aria-label="Cerrar">&times;</button>
+      </div>
+      <form id="form-mesa" class="formulario" novalidate>
+        <input type="hidden" name="id">
+        <div class="campo">
+          <label for="mesa-nombre">Nombre o número</label>
+          <input id="mesa-nombre" name="nombre" type="text" maxlength="40" required placeholder="Mesa 6">
+        </div>
+        <div class="formulario__fila">
+          <div class="campo">
+            <label for="mesa-zona">Zona</label>
+            <select id="mesa-zona" name="zona" required>
+              <option value="salon">Salón</option>
+              <option value="terraza">Terraza</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="mesa-capacidad">Capacidad (personas)</label>
+            <input id="mesa-capacidad" name="capacidad" type="number" min="1" max="20" step="1" required>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="mesa-foto">Foto <span class="opcional">(opcional, enlace a una imagen)</span></label>
+          <input id="mesa-foto" name="foto_url" type="url" placeholder="https://...">
+        </div>
+        <p class="aviso aviso--error" id="mesa-error" role="alert" hidden></p>
+        <div class="formulario__acciones">
+          <button class="boton boton--borde" type="button" data-cerrar>Cancelar</button>
+          <button class="boton boton--oscuro" type="submit">Guardar mesa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Formulario de plato -->
+  <div id="modal-plato" class="modal" hidden>
+    <div class="modal__fondo" data-cerrar></div>
+    <div class="modal__caja modal__caja--chica" role="dialog" aria-modal="true" aria-labelledby="plato-titulo">
+      <div class="modal__cabecera">
+        <h2 id="plato-titulo">Nuevo plato</h2>
+        <button class="modal__cerrar" type="button" data-cerrar aria-label="Cerrar">&times;</button>
+      </div>
+      <form id="form-plato" class="formulario" novalidate>
+        <input type="hidden" name="id">
+        <div class="campo">
+          <label for="plato-nombre">Nombre</label>
+          <input id="plato-nombre" name="nombre" type="text" maxlength="80" required>
+        </div>
+        <div class="formulario__fila">
+          <div class="campo">
+            <label for="plato-categoria">Categoría</label>
+            <select id="plato-categoria" name="categoria" required></select>
+          </div>
+          <div class="campo">
+            <label for="plato-precio">Precio (COP)</label>
+            <input id="plato-precio" name="precio" type="number" min="0" step="100" required>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="plato-descripcion">Descripción</label>
+          <textarea id="plato-descripcion" name="descripcion" maxlength="200"></textarea>
+        </div>
+        <label class="interruptor"><input type="checkbox" name="disponible" checked> Mostrar en la carta</label>
+        <p class="aviso aviso--error" id="plato-error" role="alert" hidden></p>
+        <div class="formulario__acciones">
+          <button class="boton boton--borde" type="button" data-cerrar>Cancelar</button>
+          <button class="boton boton--oscuro" type="submit">Guardar plato</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>
