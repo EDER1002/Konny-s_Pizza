@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Pizza en cono (el producto de Konys). Ilustración propia. -->
+  <defs>
+    <clipPath id="cono">
+      <path d="M108 168 Q210 132 312 168 L224 372 Q210 392 196 372 Z"/>
+    </clipPath>
+  </defs>
+  <g transform="rotate(-14 210 240)">
+    <!-- Cono de masa -->
+    <path d="M108 168 Q210 132 312 168 L224 372 Q210 392 196 372 Z" fill="#D9822B"/>
+    <g clip-path="url(#cono)" stroke="#B9661A" stroke-width="5" stroke-linecap="round" opacity="0.7">
+      <path d="M90 200 L330 330"/><path d="M90 250 L330 380"/><path d="M90 150 L330 280"/>
+      <path d="M330 200 L90 330"/><path d="M330 250 L90 380"/><path d="M330 150 L90 280"/>
+    </g>
+    <!-- Salsa -->
+    <path d="M98 170 C90 118 150 88 210 92 C272 88 332 118 322 170 C306 190 288 176 272 194 C256 210 240 186 220 200 C200 214 184 188 164 198 C144 206 118 190 98 170 Z" fill="#C8432B"/>
+    <!-- Queso derretido -->
+    <path d="M104 160 C98 112 152 84 210 88 C268 84 324 112 316 160 C302 176 288 166 276 182 C262 198 246 176 226 188 C208 200 194 214 186 186 C176 168 160 196 142 184 C126 174 116 176 104 160 Z" fill="#F7C873"/>
+    <path d="M186 186 C190 206 196 222 204 214 C210 206 204 194 212 188" fill="#F7C873"/>
+    <!-- Ingredientes -->
+    <g fill="#B7322A">
+      <circle cx="158" cy="128" r="17"/><circle cx="244" cy="116" r="16"/><circle cx="206" cy="152" r="14"/>
+      <circle cx="286" cy="146" r="12"/><circle cx="128" cy="160" r="9"/><circle cx="200" cy="104" r="10"/>
+    </g>
+    <g fill="#3E7D3A">
+      <path d="M222 132 q12 -14 26 0 q-12 14 -26 0z"/>
+      <path d="M140 102 q8 -16 24 -6 q-8 16 -24 6z"/>
+      <path d="M262 168 q14 -9 24 5 q-14 9 -24 -5z"/>
+    </g>
+  </g>
+</svg>

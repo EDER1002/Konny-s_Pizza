@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reserva tu mesa en Konys Pizza</title>
+  <meta name="description" content="Reserva tu mesa en Konys Pizza, Cra. 36 # 38-64, El Prado, Bucaramanga. Mira las mesas libres y elige tu hora sin llamar.">
+  <meta name="theme-color" content="#0F2B3D">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="saltar" href="#mesas">Ir a las mesas</a>
+
+  <!-- Encabezado: logo, menú y acceso discreto al panel -->
+  <header class="encabezado">
+    <div class="contenedor encabezado__fila">
+      <a class="marca" href="#inicio" aria-label="Konys Pizza, inicio">
+        <img src="img/logo.svg" alt="" width="36" height="36">
+        <span>Konys</span>
+      </a>
+      <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal">
+        <span class="menu-boton__icono" aria-hidden="true"></span>
+        <span class="sr">Abrir menú</span>
+      </button>
+      <nav id="menu-principal" class="menu" aria-label="Menú principal">
+        <a href="#inicio">Inicio</a>
+        <a href="#mesas">Mesas</a>
+        <a href="#carta">Carta</a>
+        <a href="#mesas">Reservar</a>
+        <a href="#contacto">Contacto</a>
+        <a class="menu__admin" href="admin.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section id="inicio" class="hero">
+      <div class="contenedor hero__contenido">
+        <h1 class="hero__titulo">Konys</h1>
+        <p class="hero__eslogan">La pizza más icónica de la ciudad</p>
+        <a class="boton boton--acento boton--grande" href="#mesas">Reserva tu mesa</a>
+        <p class="hero__hoy" id="horario-hoy" aria-live="polite"></p>
+      </div>
+      <img class="hero__pizza" src="img/pizza.svg" alt="" width="420" height="420">
+    </section>
+
+    <!-- Mesas (RF-01, RF-02) -->
+    <section id="mesas" class="seccion">
+      <div class="contenedor">
+        <div class="seccion__encabezado">
+          <h2>Nuestras mesas</h2>
+          <p class="seccion__ayuda">Elige una mesa para ver sus horarios libres y reservar.</p>
+        </div>
+        <div id="lista-mesas" class="mesas" aria-live="polite">
+          <p class="cargando">Cargando mesas…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Carta digital (RF-07) -->
+    <section id="carta" class="seccion seccion--carta">
+      <div class="contenedor">
+        <div class="seccion__encabezado">
+          <h2>Carta</h2>
+          <p class="seccion__ayuda">Todas las pizzas son en cono de 18 cm y vienen con papas al horno. Precios en pesos colombianos.</p>
+        </div>
+        <div id="carta-pestanas" class="pestanas" role="tablist" aria-label="Categorías de la carta"></div>
+        <div id="carta-lista" class="carta" role="tabpanel" aria-live="polite">
+          <p class="cargando">Cargando carta…</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pie de página -->
+  <footer id="contacto" class="pie">
+    <div class="contenedor pie__fila">
+      <div>
+        <p class="pie__marca">Konys Pizza</p>
+        <p>Pizza en cono</p>
+        <p>Cra. 36 # 38-64, barrio El Prado, Bucaramanga</p>
+      </div>
+      <div>
+        <p class="pie__titulo">Horario</p>
+        <!-- Se llena con la tabla horarios, así coincide con lo que define el admin -->
+        <p id="horario-pie">Todos los días, de 12:30 a 14:30 y de 17:00 a 23:00.</p>
+        <p>Domicilios y eventos</p>
+      </div>
+      <div>
+        <p class="pie__titulo">Contacto</p>
+        <p><a href="https://wa.me/573224603184" target="_blank" rel="noopener">WhatsApp 322 460 3184</a></p>
+        <p><a href="https://www.instagram.com/konys_pizza/" target="_blank" rel="noopener">Instagram @konys_pizza</a></p>
+        <p><a href="https://www.tiktok.com/@konyspizza" target="_blank" rel="noopener">TikTok @konyspizza</a></p>
+        <p><a href="https://www.facebook.com/konyspizza/" target="_blank" rel="noopener">Facebook</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal de reserva (RF-03 a RF-06) -->
+  <div id="modal-reserva" class="modal" hidden>
+    <div class="modal__fondo" data-cerrar></div>
+    <div class="modal__caja" role="dialog" aria-modal="true" aria-labelledby="reserva-titulo">
+      <div class="modal__cabecera">
+        <div>
+          <h2 id="reserva-titulo">Reservar</h2>
+          <p class="modal__subtitulo" id="reserva-subtitulo"></p>
+        </div>
+        <button class="modal__cerrar" type="button" data-cerrar aria-label="Cerrar">&times;</button>
+      </div>
+
+      <!-- Paso 1 y 2: fecha y hora / Paso 3: datos -->
+      <form id="form-reserva" class="reserva" novalidate>
+        <div class="reserva__columna">
+          <fieldset class="bloque">
+            <legend>1. Elige la fecha</legend>
+            <div class="calendario" id="calendario"></div>
+          </fieldset>
+          <fieldset class="bloque">
+            <legend>2. Elige la hora</legend>
+            <div id="slots" class="slots" aria-live="polite"></div>
+            <ul class="leyenda" aria-label="Significado de los colores">
+              <li><span class="leyenda__muestra leyenda__muestra--libre"></span>Libre</li>
+              <li><span class="leyenda__muestra leyenda__muestra--ocupado"></span>Ocupado</li>
+              <li><span class="leyenda__muestra leyenda__muestra--elegido"></span>Elegido</li>
+            </ul>
+          </fieldset>
+        </div>
+
+        <div class="reserva__columna">
+          <fieldset class="bloque">
+            <legend>3. Tus datos</legend>
+            <div class="campo">
+              <label for="campo-nombre">Nombre completo</label>
+              <input id="campo-nombre" name="nombre" type="text" autocomplete="name" maxlength="80" required>
+              <p class="campo__error" id="error-nombre"></p>
+            </div>
+            <div class="campo">
+              <label for="campo-contacto">Teléfono o WhatsApp <span class="opcional">(opcional)</span></label>
+              <input id="campo-contacto" name="contacto" type="tel" autocomplete="tel" inputmode="tel" maxlength="20">
+              <p class="campo__error" id="error-contacto"></p>
+            </div>
+            <div class="campo">
+              <label for="campo-personas">Número de personas</label>
+              <input id="campo-personas" name="personas" type="number" inputmode="numeric" min="1" step="1" required>
+              <p class="campo__ayuda" id="ayuda-personas"></p>
+              <p class="campo__error" id="error-personas"></p>
+            </div>
+          </fieldset>
+
+          <div class="resumen" id="resumen" aria-live="polite"></div>
+          <p class="aviso aviso--error" id="error-reserva" role="alert" hidden></p>
+          <button class="boton boton--acento boton--ancho" type="submit" id="boton-confirmar">Confirmar reserva</button>
+        </div>
+      </form>
+
+      <!-- Confirmación (RF-06) -->
+      <div id="confirmacion" class="confirmacion" hidden tabindex="-1">
+        <svg class="confirmacion__icono" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="30"></circle>
+          <path d="M19 33l9 9 17-19"></path>
+        </svg>
+        <h3>¡Reserva confirmada!</h3>
+        <p class="confirmacion__texto">Muestra esta pantalla al llegar. Te esperamos.</p>
+        <dl class="confirmacion__datos" id="confirmacion-datos"></dl>
+        <button class="boton boton--oscuro boton--ancho" type="button" data-cerrar>Volver al inicio</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/cliente.js"></script>
+</body>
+</html>
