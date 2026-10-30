@@ -41,12 +41,60 @@
     <!-- Hero -->
     <section id="inicio" class="hero">
       <div class="contenedor hero__contenido">
+        <p class="hero__etiqueta">Pizza en cono · Bucaramanga</p>
         <h1 class="hero__titulo">Konys</h1>
         <p class="hero__eslogan">La pizza más icónica de la ciudad</p>
-        <a class="boton boton--acento boton--grande" href="#mesas">Reserva tu mesa</a>
-        <p class="hero__hoy" id="horario-hoy" aria-live="polite"></p>
+        <div class="hero__acciones">
+          <a class="boton boton--acento boton--grande" href="#mesas">Reserva tu mesa</a>
+          <a class="boton boton--claro boton--grande" href="#carta">Ver la carta</a>
+        </div>
+        <p class="hero__prueba">Más de 34.900 personas nos siguen en <a href="https://www.instagram.com/konys_pizza/" target="_blank" rel="noopener">Instagram</a></p>
       </div>
       <img class="hero__pizza" src="img/pizza.svg" alt="" width="420" height="420">
+    </section>
+
+    <!-- Datos rápidos: horario de hoy (lo llena cliente.js), dirección y contacto -->
+    <section class="datos" aria-label="Información rápida">
+      <div class="contenedor datos__fila">
+        <div class="dato dato--reloj">
+          <p class="dato__titulo">Horario de hoy</p>
+          <p class="dato__texto" id="horario-hoy" aria-live="polite">Todos los días, de 12:30 a 14:30 y de 17:00 a 23:00.</p>
+        </div>
+        <div class="dato dato--pin">
+          <p class="dato__titulo">Dónde estamos</p>
+          <p class="dato__texto">Cra. 36 # 38-64, barrio El Prado, Bucaramanga</p>
+        </div>
+        <div class="dato dato--chat">
+          <p class="dato__titulo">Domicilios y eventos</p>
+          <p class="dato__texto"><a href="https://wa.me/573224603184" target="_blank" rel="noopener">Escríbenos por WhatsApp</a></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cómo reservar: menos de 3 pasos (RNF-01) -->
+    <section class="seccion seccion--pasos" aria-labelledby="pasos-titulo">
+      <div class="contenedor">
+        <div class="seccion__encabezado">
+          <h2 id="pasos-titulo">Reserva en 2 pasos</h2>
+          <p class="seccion__ayuda">Sin llamar y sin crear cuenta.</p>
+        </div>
+        <ol class="pasos">
+          <li class="paso">
+            <span class="paso__numero" aria-hidden="true">1</span>
+            <div>
+              <h3>Elige tu mesa, la fecha y la hora</h3>
+              <p>Mira al instante qué horarios están libres y cuáles ocupados.</p>
+            </div>
+          </li>
+          <li class="paso">
+            <span class="paso__numero" aria-hidden="true">2</span>
+            <div>
+              <h3>Confirma con tu nombre</h3>
+              <p>Dinos cuántas personas son y recibe tu confirmación en pantalla.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
     </section>
 
     <!-- Mesas (RF-01, RF-02) -->
