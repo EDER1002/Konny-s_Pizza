@@ -12,6 +12,11 @@ create function pruebas.dia(n int) returns date language sql stable as $$
   select (now() at time zone 'America/Bogota')::date + n
 $$;
 
+-- Nombre del día en español (para tests hechos con roles sin permiso sobre dia_semana_es).
+create function pruebas.nombre_dia(n int) returns text language sql stable security definer as $$
+  select public.dia_semana_es(pruebas.dia(n))
+$$;
+
 -- Ejecuta una consulta y exige que falle con un mensaje que contenga "patron".
 create function pruebas.debe_fallar(nombre text, consulta text, patron text) returns void
 language plpgsql as $$
@@ -64,16 +69,26 @@ select pruebas.igual('anon lee las mesas', (select count(*)::int from mesas), 3)
 select pruebas.igual('anon lee los horarios', (select count(*)::int from horarios), 14);
 select pruebas.igual('anon lee la carta', (select count(*)::int from platos), 2);
 select pruebas.debe_fallar('anon no puede crear mesas',
-  $q$insert into mesas (nombre, zona, capacidad) values ('Mesa X', 'salon', 2)$q$, 'row-level security');
+  $q$insert into mesas (nombre, zona, capacidad) values ('Mesa X', 'salon', 2)$q$, 'permission denied');
 select pruebas.debe_fallar('anon no puede insertar reservas directo',
   format($q$insert into reservas (mesa_id, cliente_nombre, num_personas, fecha, hora_inicio, hora_fin)
-            values (101, 'Ana', 2, %L, '12:30', '13:30')$q$, pruebas.dia(1)), 'row-level security');
+            values (101, 'Ana', 2, %L, '12:30', '13:30')$q$, pruebas.dia(1)), 'permission denied');
 select pruebas.debe_fallar('anon no puede ver la lista de administradores',
   'select count(*) from administradores', 'permission denied');
--- Estos cambios no deben tener efecto (RLS no deja tocar ninguna fila).
-update mesas set capacidad = 99 where id = 101;
-delete from horarios;
-delete from platos;
+select pruebas.debe_fallar('anon no puede leer el registro del limitador',
+  'select count(*) from intentos_reserva', 'permission denied');
+select pruebas.debe_fallar('anon no puede leer reservas',
+  'select count(*) from reservas', 'permission denied');
+-- Permisos mínimos: ni escribir, ni borrar, ni vaciar tablas.
+select pruebas.debe_fallar('anon no puede cambiar mesas', 'update mesas set capacidad = 99 where id = 101', 'permission denied');
+select pruebas.debe_fallar('anon no puede borrar horarios', 'delete from horarios', 'permission denied');
+select pruebas.debe_fallar('anon no puede borrar la carta', 'delete from platos', 'permission denied');
+select pruebas.debe_fallar('anon no puede vaciar reservas (TRUNCATE)', 'truncate reservas', 'permission denied');
+select pruebas.debe_fallar('anon no puede vaciar mesas (TRUNCATE)', 'truncate mesas cascade', 'permission denied');
+select pruebas.debe_fallar('anon no puede llamar funciones internas',
+  $q$select public.dia_semana_es(current_date)$q$, 'permission denied');
+select pruebas.debe_fallar('anon no puede llamar al trigger directo',
+  $q$select public.validar_capacidad()$q$, 'permission denied');
 reset role;
 select pruebas.igual('anon no cambia mesas', (select capacidad from mesas where id = 101), 4);
 select pruebas.igual('anon no borra horarios', (select count(*)::int from horarios), 14);
@@ -113,7 +128,6 @@ select pruebas.debe_fallar('el número de personas debe ser al menos 1',
   format($q$select crear_reserva(101, %L, '18:00', 'Luis', 0)$q$, pruebas.dia(1)), 'PERSONAS_INVALIDAS');
 select pruebas.debe_fallar('el contacto no puede ser muy largo',
   format($q$select crear_reserva(101, %L, '18:00', 'Luis', 2, %L)$q$, pruebas.dia(1), repeat('1', 41)), 'CONTACTO_INVALIDO');
-select pruebas.igual('anon no ve las reservas de otros', (select count(*)::int from reservas), 0);
 select pruebas.igual('obtener_ocupados muestra los slots tomados',
   (select count(*)::int from obtener_ocupados(pruebas.dia(1)) where mesa_id = 101), 2);
 select pruebas.igual('obtener_ocupados no entrega datos personales',
@@ -139,6 +153,8 @@ select pruebas.igual('un usuario cualquiera no es administrador', es_admin(), fa
 select pruebas.debe_fallar('un usuario cualquiera no crea mesas',
   $q$insert into mesas (nombre, zona, capacidad) values ('Mesa X', 'salon', 2)$q$, 'row-level security');
 select pruebas.igual('un usuario cualquiera no ve reservas', (select count(*)::int from reservas), 0);
+select pruebas.debe_fallar('un usuario cualquiera no puede vaciar reservas (TRUNCATE)', 'truncate reservas', 'permission denied');
+select pruebas.debe_fallar('un usuario cualquiera no lee administradores', 'select * from administradores', 'permission denied');
 reset role;
 
 -- ---------- Administrador ----------
@@ -170,8 +186,8 @@ select pruebas.igual('el admin borra platos', (select count(*)::int from platos 
 select pruebas.debe_fallar('el precio no puede ser negativo',
   $q$insert into platos (nombre, categoria, precio) values ('Mal', 'pizzas', -1)$q$, 'platos_precio_check');
 
-update horarios set activo = false where dia_semana = dia_semana_es(pruebas.dia(2)) and jornada = 'almuerzo';
-update horarios set duracion_slot = 30 where dia_semana = dia_semana_es(pruebas.dia(3)) and jornada = 'noche';
+update horarios set activo = false where dia_semana = pruebas.nombre_dia(2) and jornada = 'almuerzo';
+update horarios set duracion_slot = 30 where dia_semana = pruebas.nombre_dia(3) and jornada = 'noche';
 select pruebas.igual('el admin edita horarios', (select count(*)::int from horarios where duracion_slot = 30), 1);
 select pruebas.debe_fallar('la hora de cierre debe ser mayor que la de apertura',
   $q$update horarios set hora_fin = '10:00' where jornada = 'almuerzo'$q$, 'horarios_horas_check');
@@ -193,5 +209,61 @@ select pruebas.debe_fallar('volver a confirmar una reserva cancelada no puede cr
   $q$update reservas set estado = 'confirmada' where cliente_nombre = 'Juan Pérez'$q$, 'reservas_sin_cruce');
 reset role;
 select set_config('request.jwt.claims', '', false);
+
+-- ---------- Endurecimiento de seguridad ----------
+set role anon;
+select pruebas.debe_fallar('el nombre no admite etiquetas HTML',
+  format($q$select crear_reserva(102, %L, '19:00', '<img src=x onerror=alert(1)>', 2)$q$, pruebas.dia(4)), 'NOMBRE_INVALIDO');
+select pruebas.debe_fallar('el nombre no admite saltos de línea',
+  format($q$select crear_reserva(102, %L, '19:00', 'Ana%sGómez', 2)$q$, pruebas.dia(4), chr(10)), 'NOMBRE_INVALIDO');
+select pruebas.debe_fallar('el contacto no admite HTML',
+  format($q$select crear_reserva(102, %L, '19:00', 'Ana Gómez', 2, '<b>hola</b>')$q$, pruebas.dia(4)), 'CONTACTO_INVALIDO');
+select pruebas.debe_fallar('el contacto no admite SQL',
+  format($q$select crear_reserva(102, %L, '19:00', 'Ana Gómez', 2, %L)$q$, pruebas.dia(4), '1'' OR ''1''=''1'), 'CONTACTO_INVALIDO');
+select pruebas.debe_fallar('el contacto no puede ser demasiado corto',
+  format($q$select crear_reserva(102, %L, '19:00', 'Ana Gómez', 2, '123')$q$, pruebas.dia(4)), 'CONTACTO_INVALIDO');
+select pruebas.igual('un teléfono con prefijo y espacios es válido',
+  crear_reserva(102, pruebas.dia(4), '19:00', 'Ana Gómez', 2, '+57 300 123 4567') ->> 'cliente_nombre', 'Ana Gómez');
+select pruebas.igual('un nombre con tilde, apóstrofo y guion es válido',
+  crear_reserva(102, pruebas.dia(4), '20:00', 'María-José O''Neill', 2) ->> 'cliente_nombre', 'María-José O''Neill');
+reset role;
+
+select pruebas.debe_fallar('la foto de la mesa no puede ser javascript:',
+  $q$insert into mesas (nombre, zona, capacidad, foto_url) values ('Mesa JS', 'salon', 2, 'javascript:alert(1)')$q$, 'mesas_foto_check');
+select pruebas.debe_fallar('la foto de la mesa debe ser https',
+  $q$insert into mesas (nombre, zona, capacidad, foto_url) values ('Mesa HTTP', 'salon', 2, 'http://sitio.com/a.jpg')$q$, 'mesas_foto_check');
+insert into mesas (nombre, zona, capacidad, foto_url) values ('Mesa Foto', 'salon', 2, 'https://sitio.com/a.jpg');
+select pruebas.igual('una foto https es válida', (select count(*)::int from mesas where nombre = 'Mesa Foto'), 1);
+select pruebas.debe_fallar('un nombre con < no se guarda ni insertando directo',
+  format($q$insert into reservas (mesa_id, cliente_nombre, num_personas, fecha, hora_inicio, hora_fin)
+            values (102, 'a<b', 2, %L, '10:00', '11:00')$q$, pruebas.dia(5)), 'reservas_nombre_check');
+
+-- Límite por origen: 10 reservas por hora desde la misma IP.
+select set_config('request.headers', '{"cf-connecting-ip":"203.0.113.9"}', false);
+set role anon;
+do $$
+declare i int; ok int := 0; frenadas int := 0;
+begin
+  for i in 0..14 loop
+    begin
+      perform crear_reserva(101, pruebas.dia(10 + i / 5), (array['12:30','13:30','17:00','18:00','19:00'])[1 + i % 5]::time, 'Bot ' || i, 1);
+      ok := ok + 1;
+    exception when others then
+      if sqlerrm = 'DEMASIADAS_RESERVAS' then frenadas := frenadas + 1; else raise; end if;
+    end;
+  end loop;
+  if ok <> 10 or frenadas <> 5 then
+    raise exception 'FALLO - el limitador: aceptadas %, frenadas % (se esperaba 10 y 5)', ok, frenadas;
+  end if;
+  raise notice 'ok - desde una misma IP solo se aceptan 10 reservas por hora';
+end $$;
+select set_config('request.headers', '{"cf-connecting-ip":"203.0.113.10"}', false);
+select pruebas.igual('otra IP distinta no se ve afectada',
+  crear_reserva(101, pruebas.dia(20), '12:30', 'Otra Persona', 1) ->> 'hora_inicio', '12:30');
+reset role;
+select pruebas.igual('el registro guarda un hash, no la IP',
+  (select count(*)::int from intentos_reserva where ip_hash like '%203.0.113%'), 0);
+select set_config('request.headers', '', false);
+
 
 \echo 'TODAS LAS PRUEBAS DE LA BASE DE DATOS PASARON'

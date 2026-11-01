@@ -2,7 +2,7 @@
 // supabase.js — Conexión con Supabase y todas las consultas de la app.
 // cliente.js y admin.js solo hablan con la base de datos desde aquí.
 // =====================================================================
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm';
 import { ordenarMesas } from './logica.js';
 
 // js/config.js lo crea Vercel en cada despliegue (o tú, copiando config.example.js).

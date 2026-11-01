@@ -174,11 +174,17 @@ describe('validación del formulario', () => {
   test('revisa que el contacto parezca un teléfono', () => {
     assert.match(validarReserva({ nombre: 'Ana', personas: 2, contacto: 'hola' }, 4).errores.contacto, /teléfono/i);
   });
+  test('rechaza HTML en el nombre y en el contacto (igual que la base de datos)', () => {
+    assert.match(validarReserva({ nombre: '<img src=x onerror=alert(1)>', personas: 2 }, 4).errores.nombre, /< o >/);
+    assert.match(validarReserva({ nombre: 'Ana', personas: 2, contacto: '<b>hola</b>' }, 4).errores.contacto, /teléfono/i);
+    assert.equal(validarReserva({ nombre: "María-José O'Neill", personas: 2, contacto: '+57 300 123 4567' }, 4).valido, true);
+  });
 });
 
 describe('mensajes de error', () => {
   test('traduce los códigos de la base de datos', () => {
     assert.match(mensajeError({ message: 'SLOT_OCUPADO' }), /acaba de ser reservado/);
+    assert.match(mensajeError({ message: 'DEMASIADAS_RESERVAS' }), /muchas reservas/);
     assert.match(mensajeError({ message: 'conflicting key value violates exclusion constraint "reservas_sin_cruce"' }), /se cruza con otra reserva/);
     assert.match(mensajeError({ message: 'CAPACIDAD_EXCEDIDA', details: 'La mesa admite máximo 4 personas.' }), /máximo 4 personas/);
     assert.match(mensajeError({ message: 'FECHA_INVALIDA' }), /fecha/);

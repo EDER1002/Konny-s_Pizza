@@ -25,7 +25,9 @@ create table public.mesas (
   creado_en   timestamptz not null default now(),
   constraint mesas_nombre_check    check (char_length(btrim(nombre)) between 1 and 40),
   constraint mesas_zona_check      check (zona in ('terraza', 'salon')),
-  constraint mesas_capacidad_check check (capacidad between 1 and 20)
+  constraint mesas_capacidad_check check (capacidad between 1 and 20),
+  -- La foto solo puede ser un enlace https (evita javascript: y similares).
+  constraint mesas_foto_check      check (foto_url is null or (foto_url ~* '^https://[^[:space:]<>"]+$' and char_length(foto_url) <= 500))
 );
 -- No se repiten nombres de mesa ("Mesa 1" y "mesa 1" cuentan como iguales).
 create unique index mesas_nombre_unico on public.mesas (lower(btrim(nombre)));
@@ -58,8 +60,10 @@ create table public.reservas (
   hora_fin          time not null,
   estado            text not null default 'confirmada',
   creado_en         timestamptz not null default now(),
-  constraint reservas_nombre_check   check (char_length(btrim(cliente_nombre)) between 2 and 80),
-  constraint reservas_contacto_check check (cliente_contacto is null or char_length(cliente_contacto) <= 40),
+  -- Sin < > ni caracteres de control en el nombre; el contacto solo lleva
+  -- números, +, paréntesis, guiones y espacios (7 a 20 caracteres).
+  constraint reservas_nombre_check   check (char_length(btrim(cliente_nombre)) between 2 and 80 and cliente_nombre !~ '[<>[:cntrl:]]'),
+  constraint reservas_contacto_check check (cliente_contacto is null or cliente_contacto ~ '^[0-9+() -]{7,20}$'),
   constraint reservas_personas_check check (num_personas >= 1),
   constraint reservas_horas_check    check (hora_fin > hora_inicio),
   constraint reservas_estado_check   check (estado in ('confirmada', 'cancelada', 'completada')),
@@ -82,6 +86,7 @@ create table public.platos (
   precio       integer not null,
   disponible   boolean not null default true,
   constraint platos_nombre_check    check (char_length(btrim(nombre)) between 1 and 80),
+  constraint platos_descripcion_check check (descripcion is null or char_length(descripcion) <= 300),
   constraint platos_categoria_check check (categoria in ('pizzas', 'entradas', 'postres', 'bebidas')),
   constraint platos_precio_check    check (precio >= 0)
 );
@@ -91,6 +96,14 @@ create table public.administradores (
   email text primary key
 );
 
+-- Registro de reservas por origen (solo guarda un hash de la IP, nunca la IP)
+-- para frenar a quien intente llenar el restaurante con reservas falsas.
+create table public.intentos_reserva (
+  ip_hash    text not null,
+  creado_en  timestamptz not null default now()
+);
+create index intentos_reserva_idx on public.intentos_reserva (ip_hash, creado_en);
+
 
 -- ---------------------------------------------------------------------
 -- 2. Funciones
@@ -98,13 +111,13 @@ create table public.administradores (
 
 -- Nombre del día en español (sin tildes), igual que en la tabla horarios.
 create function public.dia_semana_es(p_fecha date) returns text
-language sql immutable as $$
+language sql immutable set search_path = '' as $$
   select (array['lunes','martes','miercoles','jueves','viernes','sabado','domingo'])[extract(isodow from p_fecha)::int]
 $$;
 
 -- ¿El usuario que hace la consulta es administrador?
 create function public.es_admin() returns boolean
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = '' as $$
   select exists (
     select 1 from public.administradores a
     where lower(a.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
@@ -113,7 +126,7 @@ $$;
 
 -- Nunca deja guardar más personas que la capacidad de la mesa.
 create function public.validar_capacidad() returns trigger
-language plpgsql set search_path = public as $$
+language plpgsql set search_path = '' as $$
 declare
   v_capacidad integer;
 begin
@@ -133,7 +146,7 @@ create trigger reservas_validar_capacidad
 -- personales, por eso el público puede usarla sin ver la tabla reservas.
 create function public.obtener_ocupados(p_fecha date)
 returns table (mesa_id bigint, hora_inicio text, hora_fin text)
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = '' as $$
   select r.mesa_id, to_char(r.hora_inicio, 'HH24:MI'), to_char(r.hora_fin, 'HH24:MI')
   from public.reservas r
   where r.fecha = p_fecha and r.estado <> 'cancelada'
@@ -143,7 +156,7 @@ $$;
 -- Crea una reserva revisando todas las reglas en un solo paso.
 -- Errores posibles: MESA_NO_DISPONIBLE, NOMBRE_INVALIDO, CONTACTO_INVALIDO,
 -- PERSONAS_INVALIDAS, CAPACIDAD_EXCEDIDA, FECHA_INVALIDA, HORARIO_INVALIDO,
--- SLOT_OCUPADO.
+-- SLOT_OCUPADO, DEMASIADAS_RESERVAS.
 create function public.crear_reserva(
   p_mesa_id          bigint,
   p_fecha            date,
@@ -152,7 +165,7 @@ create function public.crear_reserva(
   p_num_personas     integer,
   p_cliente_contacto text default null
 ) returns json
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = '' as $$
 declare
   v_mesa      public.mesas;
   v_horario   public.horarios;
@@ -163,16 +176,18 @@ declare
   v_minuto    integer;
   v_hora_fin  time;
   v_id        bigint;
+  v_ip        text;
+  v_ip_hash   text;
 begin
   select * into v_mesa from public.mesas where id = p_mesa_id;
   if not found or not v_mesa.activa then
     raise exception 'MESA_NO_DISPONIBLE';
   end if;
 
-  if char_length(v_nombre) not between 2 and 80 then
+  if char_length(v_nombre) not between 2 and 80 or v_nombre ~ '[<>[:cntrl:]]' then
     raise exception 'NOMBRE_INVALIDO';
   end if;
-  if v_contacto is not null and char_length(v_contacto) > 40 then
+  if v_contacto is not null and v_contacto !~ '^[0-9+() -]{7,20}$' then
     raise exception 'CONTACTO_INVALIDO';
   end if;
   if p_num_personas is null or p_num_personas < 1 then
@@ -205,6 +220,26 @@ begin
 
   v_hora_fin := p_hora_inicio + make_interval(mins => v_horario.duracion_slot);
 
+  -- Límite por origen: máximo 10 reservas por hora desde la misma IP.
+  -- La IP la pone el proxy de Supabase (cabecera cf-connecting-ip). Si no
+  -- hay cabecera (pruebas locales) no se limita.
+  begin
+    v_ip := coalesce(
+      nullif(btrim(current_setting('request.headers', true)::json ->> 'cf-connecting-ip'), ''),
+      nullif(btrim(split_part(current_setting('request.headers', true)::json ->> 'x-forwarded-for', ',', 1)), '')
+    );
+  exception when others then
+    v_ip := null;
+  end;
+  if v_ip is not null then
+    v_ip_hash := encode(sha256(convert_to('konys:' || v_ip, 'UTF8')), 'hex');
+    delete from public.intentos_reserva where creado_en < now() - interval '1 day';
+    if (select count(*) from public.intentos_reserva
+        where ip_hash = v_ip_hash and creado_en > now() - interval '1 hour') >= 10 then
+      raise exception 'DEMASIADAS_RESERVAS';
+    end if;
+  end if;
+
   begin
     insert into public.reservas (mesa_id, cliente_nombre, cliente_contacto, num_personas, fecha, hora_inicio, hora_fin)
     values (p_mesa_id, v_nombre, v_contacto, p_num_personas, p_fecha, p_hora_inicio, v_hora_fin)
@@ -212,6 +247,10 @@ begin
   exception when exclusion_violation then
     raise exception 'SLOT_OCUPADO';
   end;
+
+  if v_ip_hash is not null then
+    insert into public.intentos_reserva (ip_hash) values (v_ip_hash);
+  end if;
 
   return json_build_object(
     'id',             v_id,
@@ -247,15 +286,31 @@ create policy "El admin gestiona horarios" on public.horarios for all to authent
 create policy "El admin gestiona la carta" on public.platos   for all to authenticated using (public.es_admin()) with check (public.es_admin());
 create policy "El admin gestiona reservas" on public.reservas for all to authenticated using (public.es_admin()) with check (public.es_admin());
 
--- La lista de administradores no se puede leer desde la app.
-revoke all on table public.administradores from anon, authenticated;
+alter table public.intentos_reserva enable row level security;
 
-revoke all on function public.crear_reserva(bigint, date, time, text, integer, text) from public;
-revoke all on function public.obtener_ocupados(date) from public;
-revoke all on function public.es_admin() from public;
+-- Permisos mínimos (principio de menor privilegio). Supabase da por defecto
+-- TODOS los permisos a anon y authenticated; aquí se quitan y se devuelven
+-- solo los necesarios. Además de RLS, esto impide TRUNCATE (que RLS no frena).
+revoke all on all tables    in schema public from anon, authenticated;
+revoke all on all sequences in schema public from anon, authenticated;
+revoke all on all functions in schema public from public, anon, authenticated;
+
+-- Público: solo leer mesas, horarios y carta.
+grant select on public.mesas, public.horarios, public.platos to anon, authenticated;
+-- Administrador (sesión iniciada): gestiona todo salvo TRUNCATE, y RLS exige es_admin().
+grant select, insert, update, delete on public.mesas, public.horarios, public.platos, public.reservas to authenticated;
+grant usage on all sequences in schema public to authenticated;
+-- administradores e intentos_reserva: nadie desde la app (solo el dueño de la base).
+
+-- Solo estas tres funciones se pueden llamar desde la app.
 grant execute on function public.crear_reserva(bigint, date, time, text, integer, text) to anon, authenticated;
 grant execute on function public.obtener_ocupados(date) to anon, authenticated;
 grant execute on function public.es_admin() to anon, authenticated;
+
+-- Lo que se cree en el futuro tampoco debe heredar permisos amplios.
+alter default privileges in schema public revoke all on tables    from anon, authenticated;
+alter default privileges in schema public revoke all on sequences from anon, authenticated;
+alter default privileges in schema public revoke all on functions from public, anon, authenticated;
 
 
 -- ---------------------------------------------------------------------

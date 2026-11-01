@@ -177,7 +177,7 @@ function pintarMesas() {
   ui.listaMesas.innerHTML = estado.mesas.map((mesa) => {
     const ocupados = estado.ocupadosEstado.filter((o) => o.mesa_id === mesa.id);
     const estadoMesa = estadoMesaHoy(marcarSlots(slots, ocupados, opciones));
-    const imagen = mesa.foto_url
+    const imagen = /^https:\/\//.test(mesa.foto_url || '')
       ? `<img src="${escaparHTML(mesa.foto_url)}" alt="Foto de ${escaparHTML(mesa.nombre)}" loading="lazy">`
       : planoMesa(mesa.capacidad, mesa.id);
     return `

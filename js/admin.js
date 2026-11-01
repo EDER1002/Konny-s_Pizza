@@ -207,7 +207,7 @@ ui.formMesa.addEventListener('submit', async (evento) => {
   let problema = '';
   if (!f.nombre.value.trim()) problema = 'Escribe el nombre o número de la mesa.';
   else if (!Number.isInteger(capacidad) || capacidad < 1 || capacidad > 20) problema = 'La capacidad debe estar entre 1 y 20 personas.';
-  else if (f.foto_url.value.trim() && !/^https?:\/\//.test(f.foto_url.value.trim())) problema = 'La foto debe ser un enlace que empiece por http:// o https://';
+  else if (f.foto_url.value.trim() && !/^https:\/\/[^\s<>"]+$/.test(f.foto_url.value.trim())) problema = 'La foto debe ser un enlace que empiece por https://';
   if (problema) {
     error.textContent = problema;
     error.hidden = false;

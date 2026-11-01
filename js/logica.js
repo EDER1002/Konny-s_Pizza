@@ -192,6 +192,9 @@ export function validarReserva({ nombre = '', personas, contacto = '' }, capacid
   const nombreLimpio = String(nombre).trim();
   if (nombreLimpio.length < 2 || nombreLimpio.length > 80) {
     errores.nombre = 'Escribe tu nombre (mínimo 2 letras).';
+  } else if (/[<>\u0000-\u001f\u007f]/.test(nombreLimpio)) {
+    // Mismo criterio que la base de datos: sin etiquetas ni caracteres de control.
+    errores.nombre = 'El nombre no puede llevar los símbolos < o >.';
   }
 
   const num = Number(personas);
@@ -202,7 +205,7 @@ export function validarReserva({ nombre = '', personas, contacto = '' }, capacid
   }
 
   const contactoLimpio = String(contacto || '').trim();
-  if (contactoLimpio && !/^[0-9+()\-\s]{7,20}$/.test(contactoLimpio)) {
+  if (contactoLimpio && !/^[0-9+() -]{7,20}$/.test(contactoLimpio)) {
     errores.contacto = 'Escribe un teléfono válido o déjalo vacío.';
   }
 
@@ -220,7 +223,9 @@ const MENSAJES = [
   ['FECHA_INVALIDA', () => 'Esa fecha u hora ya no se puede reservar. Elige otra.'],
   ['NOMBRE_INVALIDO', () => 'Escribe tu nombre (mínimo 2 letras).'],
   ['PERSONAS_INVALIDAS', () => 'Escribe el número de personas.'],
-  ['CONTACTO_INVALIDO', () => 'El contacto es demasiado largo.'],
+  ['CONTACTO_INVALIDO', () => 'Escribe un teléfono válido (solo números, +, espacios o guiones) o déjalo vacío.'],
+  ['DEMASIADAS_RESERVAS', () => 'Has hecho muchas reservas en poco tiempo. Espera un rato o escríbenos por WhatsApp.'],
+  ['mesas_foto_check', () => 'La foto debe ser un enlace que empiece por https://'],
   ['mesas_nombre_unico', () => 'Ya existe una mesa con ese nombre.'],
   ['reservas_mesa_id_fkey', () => 'No se puede borrar: la mesa tiene reservas. Mejor desactívala.'],
   ['horarios_horas_check', () => 'La hora de cierre debe ser mayor que la de apertura.'],
