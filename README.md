@@ -25,6 +25,28 @@ Antes, las reservas se hacían por llamada, WhatsApp o en persona, y eso causaba
 
 La app no deja hacer dos reservas en la misma mesa a la misma hora. Lo revisa el navegador antes de guardar y también la base de datos, así que funciona aunque dos personas confirmen al mismo tiempo.
 
+## Mockups
+
+Diseño de las pantallas del cliente (los archivos están en [`docs/mockup/cliente/`](docs/mockup/cliente/)).
+
+**Escritorio**
+
+| Inicio | Reservar | Confirmación |
+|---|---|---|
+| <img src="docs/mockup/cliente/escritorio-inicio.png" alt="Escritorio: inicio" width="280"> | <img src="docs/mockup/cliente/escritorio-reservar.png" alt="Escritorio: reservar" width="280"> | <img src="docs/mockup/cliente/escritorio-confirmacion.png" alt="Escritorio: confirmación" width="280"> |
+
+**Celular**
+
+| Inicio | Menú | Reservar | Confirmación |
+|---|---|---|---|
+| <img src="docs/mockup/cliente/movil-inicio.png" alt="Celular: inicio" width="150"> | <img src="docs/mockup/cliente/movil-menu.png" alt="Celular: menú" width="150"> | <img src="docs/mockup/cliente/movil-reservar.png" alt="Celular: reservar" width="150"> | <img src="docs/mockup/cliente/movil-confirmacion.png" alt="Celular: confirmación" width="150"> |
+
+**Estados de la pantalla**
+
+| Cargando | Sin cupo ese día | Error de formulario | Lista vacía |
+|---|---|---|---|
+| <img src="docs/mockup/cliente/estado-cargando.png" alt="Estado: cargando" width="150"> | <img src="docs/mockup/cliente/estado-sin-cupo.png" alt="Estado: sin cupo" width="150"> | <img src="docs/mockup/cliente/estado-error-formulario.png" alt="Estado: error de formulario" width="150"> | <img src="docs/mockup/cliente/estado-lista-vacia.png" alt="Estado: lista vacía" width="150"> |
+
 ## Tecnologías
 
 | Tecnología | Para qué se usa |
