@@ -27,25 +27,25 @@ La app no deja hacer dos reservas en la misma mesa a la misma hora. Lo revisa el
 
 ## Mockups
 
-Diseño de las pantallas del cliente (los archivos están en [`docs/mockup/cliente/`](docs/mockup/cliente/)).
+Diseño de las pantallas del cliente. Cada imagen es una vista previa; al hacer clic se abre completa (los archivos están en [`docs/mockup/cliente/`](docs/mockup/cliente/)).
 
 **Escritorio**
 
 | Inicio | Reservar | Confirmación |
-|---|---|---|
-| <img src="docs/mockup/cliente/escritorio-inicio.png" alt="Escritorio: inicio" width="280"> | <img src="docs/mockup/cliente/escritorio-reservar.png" alt="Escritorio: reservar" width="280"> | <img src="docs/mockup/cliente/escritorio-confirmacion.png" alt="Escritorio: confirmación" width="280"> |
+|:---:|:---:|:---:|
+| <a href="docs/mockup/cliente/escritorio-inicio.png"><img src="docs/mockup/cliente/miniaturas/escritorio-inicio.jpg" alt="Escritorio: inicio" width="300"></a> | <a href="docs/mockup/cliente/escritorio-reservar.png"><img src="docs/mockup/cliente/miniaturas/escritorio-reservar.jpg" alt="Escritorio: reservar" width="300"></a> | <a href="docs/mockup/cliente/escritorio-confirmacion.png"><img src="docs/mockup/cliente/miniaturas/escritorio-confirmacion.jpg" alt="Escritorio: confirmación" width="300"></a> |
 
 **Celular**
 
 | Inicio | Menú | Reservar | Confirmación |
-|---|---|---|---|
-| <img src="docs/mockup/cliente/movil-inicio.png" alt="Celular: inicio" width="150"> | <img src="docs/mockup/cliente/movil-menu.png" alt="Celular: menú" width="150"> | <img src="docs/mockup/cliente/movil-reservar.png" alt="Celular: reservar" width="150"> | <img src="docs/mockup/cliente/movil-confirmacion.png" alt="Celular: confirmación" width="150"> |
+|:---:|:---:|:---:|:---:|
+| <a href="docs/mockup/cliente/movil-inicio.png"><img src="docs/mockup/cliente/miniaturas/movil-inicio.jpg" alt="Celular: inicio" width="170"></a> | <a href="docs/mockup/cliente/movil-menu.png"><img src="docs/mockup/cliente/miniaturas/movil-menu.jpg" alt="Celular: menú" width="170"></a> | <a href="docs/mockup/cliente/movil-reservar.png"><img src="docs/mockup/cliente/miniaturas/movil-reservar.jpg" alt="Celular: reservar" width="170"></a> | <a href="docs/mockup/cliente/movil-confirmacion.png"><img src="docs/mockup/cliente/miniaturas/movil-confirmacion.jpg" alt="Celular: confirmación" width="170"></a> |
 
 **Estados de la pantalla**
 
 | Cargando | Sin cupo ese día | Error de formulario | Lista vacía |
-|---|---|---|---|
-| <img src="docs/mockup/cliente/estado-cargando.png" alt="Estado: cargando" width="150"> | <img src="docs/mockup/cliente/estado-sin-cupo.png" alt="Estado: sin cupo" width="150"> | <img src="docs/mockup/cliente/estado-error-formulario.png" alt="Estado: error de formulario" width="150"> | <img src="docs/mockup/cliente/estado-lista-vacia.png" alt="Estado: lista vacía" width="150"> |
+|:---:|:---:|:---:|:---:|
+| <a href="docs/mockup/cliente/estado-cargando.png"><img src="docs/mockup/cliente/miniaturas/estado-cargando.jpg" alt="Estado: cargando" width="170"></a> | <a href="docs/mockup/cliente/estado-sin-cupo.png"><img src="docs/mockup/cliente/miniaturas/estado-sin-cupo.jpg" alt="Estado: sin cupo" width="170"></a> | <a href="docs/mockup/cliente/estado-error-formulario.png"><img src="docs/mockup/cliente/miniaturas/estado-error-formulario.jpg" alt="Estado: error de formulario" width="170"></a> | <a href="docs/mockup/cliente/estado-lista-vacia.png"><img src="docs/mockup/cliente/miniaturas/estado-lista-vacia.jpg" alt="Estado: lista vacía" width="170"></a> |
 
 ## Tecnologías
 
