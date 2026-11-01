@@ -3,6 +3,9 @@ js/config.js
 .env
 .env.*
 
+# Carpeta que arma el build para publicar
+dist/
+
 # Dependencias y carpetas locales
 node_modules/
 .vercel/
@@ -14,3 +17,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.log
+*.save
+*.bak
+*.swp
+*~
