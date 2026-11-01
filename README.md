@@ -1,11 +1,11 @@
 # Konys Reservas
 
-Aplicación web para reservar mesas en **Konys Pizza** (Cra. 36 con calle 41, Bucaramanga).
+Aplicación web para reservar mesas en **Konys Pizza** (Cra. 36 # 38-64, barrio El Prado, Bucaramanga).
 
 Antes, las reservas se hacían por llamada, WhatsApp o en persona, y eso causaba mesas reservadas dos veces y clientes que no sabían qué había libre. Con esta app el cliente ve las mesas, elige fecha y hora, y confirma su reserva sin llamar. El administrador maneja las mesas, los horarios, las reservas y la carta desde un panel.
 
-- **App desplegada:** _(pega aquí la URL de Vercel)_
-- **Panel de administración:** _(URL de Vercel)_/admin
+- **App desplegada:** <https://konys-pizza.vercel.app>
+- **Panel de administración:** <https://konys-pizza.vercel.app/admin>
 - **Video explicativo:** _(pega aquí el enlace de YouTube o Drive)_
 
 ## Qué hace
@@ -53,8 +53,11 @@ konys-reservas-app/
 ├── img/                    # Logo e ilustraciones
 ├── supabase/
 │   ├── schema.sql          # Tablas, seguridad y funciones
-│   └── datos-ejemplo.sql   # Mesas, carta y reservas de prueba
-├── scripts/generar-config.js  # Crea js/config.js en Vercel con las variables de entorno
+│   ├── datos-ejemplo.sql   # Mesas, carta y reservas de prueba
+│   └── migraciones/        # Cambios para una base ya creada (001-seguridad.sql)
+├── scripts/
+│   ├── generar-config.js   # Crea js/config.js con las variables de entorno
+│   └── construir.js        # Arma dist/ con solo lo que se publica en Vercel
 ├── tests/                  # Pruebas de la lógica y de la base de datos
 ├── docs/                   # Documento del proyecto, mockups y guía
 ├── vercel.json
@@ -82,7 +85,7 @@ Necesitas [Node.js](https://nodejs.org) 18 o superior y un proyecto gratuito en 
 
 1. Importa el repositorio de GitHub en Vercel.
 2. En *Environment Variables* agrega `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
-3. Dale *Deploy*. `vercel.json` ya tiene el comando que crea `js/config.js` con esas variables, así que las claves nunca quedan en el código.
+3. Dale *Deploy*. `vercel.json` ejecuta `scripts/construir.js`, que arma la carpeta `dist/` con solo las páginas, estilos, scripts e imágenes (nunca el SQL ni las pruebas) y crea `js/config.js` con esas variables, así que las claves nunca quedan en el código.
 
 ### Pruebas
 
@@ -90,6 +93,10 @@ Necesitas [Node.js](https://nodejs.org) 18 o superior y un proyecto gratuito en 
 npm test                  # lógica de slots, fechas y validaciones
 bash tests/db/correr.sh   # reglas de la base de datos (necesita PostgreSQL instalado)
 ```
+
+## Seguridad
+
+La app se revisó con pruebas de ataque, validación en el servidor, permisos mínimos en la base de datos, límite de reservas por IP y cabeceras de seguridad (CSP). El informe completo está en [`docs/SEGURIDAD.md`](docs/SEGURIDAD.md).
 
 ## Créditos
 
