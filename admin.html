@@ -45,6 +45,7 @@
         <button type="button" data-vista="horarios">Horarios</button>
         <button type="button" data-vista="reservas">Reservas</button>
         <button type="button" data-vista="carta">Carta</button>
+        <button type="button" data-vista="recomendaciones">Recomendaciones</button>
       </nav>
       <button class="boton boton--chico panel__salir" type="button" id="boton-salir">Cerrar sesión</button>
     </aside>
@@ -99,6 +100,23 @@
           </table>
         </div>
         <div class="paginacion" id="paginacion"></div>
+      </section>
+
+      <!-- Recomendaciones: análisis administrativo de reservas -->
+      <section id="vista-recomendaciones" class="vista" hidden>
+        <div class="vista__encabezado">
+          <div><h1>Recomendaciones</h1><p class="vista__ayuda">Indicadores y sugerencias calculados a partir de las reservas y la capacidad registrada de las mesas.</p></div>
+          <button class="boton boton--acento" type="button" id="actualizar-recomendaciones">Actualizar análisis</button>
+        </div>
+        <p id="recomendaciones-actualizado" class="recomendaciones__actualizado">Aún no se ha actualizado el análisis.</p>
+        <p id="recomendaciones-estado" class="recomendaciones__estado" role="status" aria-live="polite" aria-busy="false">Carga el análisis para consultar los datos.</p>
+        <div id="recomendaciones-kpis" class="recomendaciones__kpis" aria-live="polite"></div>
+        <div class="recomendaciones__graficas">
+          <section class="recomendaciones__panel"><h2>Demanda por día</h2><div id="recomendaciones-dias" class="recomendaciones__barras"></div></section>
+          <section class="recomendaciones__panel"><h2>Demanda por hora</h2><div id="recomendaciones-horas" class="recomendaciones__barras"></div></section>
+        </div>
+        <section class="recomendaciones__panel"><h2>Sugerencias administrativas</h2><div id="recomendaciones-lista" class="recomendaciones__lista"></div></section>
+        <p class="recomendaciones__nota">La ocupación es el promedio de personas reservadas dividido por la capacidad registrada de cada mesa, usando solo reservas no canceladas con datos válidos. Las mesas inactivas se conservan para el análisis histórico. No representa ocupación simultánea, aforo real ni disponibilidad en tiempo real.</p>
       </section>
 
       <!-- Carta (RF-14) -->

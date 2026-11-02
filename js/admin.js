@@ -6,7 +6,7 @@ import {
   faltaConfiguracion, iniciarSesion, cerrarSesion, haySesionAdmin,
   obtenerMesas, guardarMesa, borrarMesa, cambiarEstadoMesa,
   obtenerHorarios, guardarHorario,
-  obtenerReservas, cambiarEstadoReserva,
+  obtenerReservas, obtenerReservasAnalisis, cambiarEstadoReserva,
   obtenerPlatos, guardarPlato, borrarPlato, cambiarDisponibilidadPlato,
   escucharCambios,
 } from './supabase.js';
@@ -15,10 +15,11 @@ import {
   formatoPrecio, paginar, fechaCorta, aMinutos, MENSAJE_GENERICO,
 } from './logica.js';
 import { abrirModal, cerrarModal, mostrarToast, conPausa, AVISO_CONFIG } from './ui.js';
+import { buildInsights } from './recomendaciones.js';
 
 const $ = (selector) => document.querySelector(selector);
 const POR_PAGINA = 10;
-const VISTAS = ['mesas', 'horarios', 'reservas', 'carta'];
+const VISTAS = ['mesas', 'horarios', 'reservas', 'carta', 'recomendaciones'];
 const ESTADOS_RESERVA = [
   ['confirmada', 'Confirmada'],
   ['cancelada', 'Cancelada'],
@@ -34,6 +35,9 @@ const estado = {
   pagina: 1,
   filtros: { fecha: '', mesaId: '' },
   dejarDeEscuchar: null,
+  analisisCargando: false,
+  analisisPendiente: false,
+  versionAnalisis: 0,
 };
 
 const ui = {
@@ -48,6 +52,13 @@ const ui = {
   tablaHorarios: $('#tabla-horarios'),
   tablaReservas: $('#tabla-reservas'),
   tablaPlatos: $('#tabla-platos'),
+  recomendacionesEstado: $('#recomendaciones-estado'),
+  recomendacionesActualizado: $('#recomendaciones-actualizado'),
+  recomendacionesKpis: $('#recomendaciones-kpis'),
+  recomendacionesDias: $('#recomendaciones-dias'),
+  recomendacionesHoras: $('#recomendaciones-horas'),
+  recomendacionesLista: $('#recomendaciones-lista'),
+  botonActualizarRecomendaciones: $('#actualizar-recomendaciones'),
   paginacion: $('#paginacion'),
   formFiltros: $('#form-filtros'),
   filtroMesa: $('#filtro-mesa'),
@@ -112,6 +123,9 @@ ui.formAcceso.addEventListener('submit', async (evento) => {
 $('#boton-salir').addEventListener('click', async () => {
   estado.dejarDeEscuchar?.();
   estado.dejarDeEscuchar = null;
+  estado.versionAnalisis += 1;
+  estado.analisisCargando = false;
+  estado.analisisPendiente = false;
   await cerrarSesion();
   mostrarAcceso();
 });
@@ -128,8 +142,9 @@ async function mostrarPanel() {
 
   // Tiempo real: las reservas nuevas aparecen sin recargar.
   estado.dejarDeEscuchar?.();
-  estado.dejarDeEscuchar = escucharCambios(['reservas'], conPausa(() => {
+  estado.dejarDeEscuchar = escucharCambios(['reservas', 'mesas'], conPausa(() => {
     if (estado.vista === 'reservas') cargarReservas();
+    if (estado.vista === 'recomendaciones') cargarRecomendaciones();
   }, 500));
 }
 
@@ -141,7 +156,7 @@ async function cambiarVista(vista) {
     else b.removeAttribute('aria-current');
   });
   history.replaceState(null, '', `#${vista}`);
-  const cargas = { mesas: cargarMesas, horarios: cargarHorarios, reservas: cargarReservas, carta: cargarPlatos };
+  const cargas = { mesas: cargarMesas, horarios: cargarHorarios, reservas: cargarReservas, carta: cargarPlatos, recomendaciones: cargarRecomendaciones };
   await cargas[vista]();
 }
 
@@ -151,6 +166,108 @@ ui.menu.addEventListener('click', (evento) => {
 });
 
 // ---------------------------------------------------------------------
+// Recomendaciones — análisis basado en reservas y capacidad de mesas
+// ---------------------------------------------------------------------
+function pintarBarrasRecomendaciones(contenedor, elementos, vacio) {
+  if (!elementos.length || elementos.every((e) => e.total === 0)) {
+    contenedor.innerHTML = `<p class="recomendaciones__vacio">${vacio}</p>`;
+    return;
+  }
+  const maximo = Math.max(1, ...elementos.map((e) => e.total));
+  contenedor.innerHTML = elementos.map((e) => `
+    <div class="recomendaciones__barra">
+      <span>${escaparHTML(e.label)}</span>
+      <div class="recomendaciones__pista" role="img" aria-label="${escaparHTML(e.label)}: ${e.total} reservas">
+        <span style="width:${e.total / maximo * 100}%"></span>
+      </div>
+      <strong>${e.total}</strong>
+    </div>`).join('');
+}
+
+function pintarRecomendaciones(datos) {
+  const k = datos.kpis;
+  const ocupacion = k.ocupacion === null ? 'No calculable' : `${k.ocupacion}%`;
+  ui.recomendacionesKpis.innerHTML = [
+    ['Reservas registradas', k.total],
+    ['Confirmadas futuras', k.confirmadasFuturas],
+    ['Confirmadas pasadas', k.confirmadasPasadas],
+    ['Completadas', k.completadas],
+    ['Canceladas', k.canceladas],
+    ['Ocupación estimada', ocupacion],
+  ].map(([titulo, valor]) => `
+    <article class="recomendaciones__kpi"><span>${titulo}</span><strong>${valor}</strong></article>`).join('');
+  pintarBarrasRecomendaciones(ui.recomendacionesDias, datos.porDia, 'No hay demanda registrada por día.');
+  pintarBarrasRecomendaciones(ui.recomendacionesHoras, datos.porHora, 'No hay demanda registrada por hora.');
+  ui.recomendacionesLista.innerHTML = datos.recomendaciones.map((r) => `
+    <article class="recomendaciones__item"><h3>${escaparHTML(r.title)}</h3>
+      <p>${escaparHTML(r.detail)}</p>
+      <small><strong>Motivo:</strong> ${escaparHTML(r.reason)}</small>
+      <small><strong>Evidencia:</strong> ${escaparHTML(r.evidence)}</small>
+      <small><strong>Acción sugerida:</strong> ${escaparHTML(r.action)}</small>
+    </article>`).join('');
+  const detalleOcupacion = k.ocupacion === null
+    ? `No hay reservas con personas y capacidad válidas. ${k.ocupacionIncompletas} registro(s) incompleto(s).`
+    : `Calculada con ${k.ocupacionMuestras} reserva(s); ${k.ocupacionIncompletas} registro(s) incompleto(s) excluido(s).`;
+  ui.recomendacionesEstado.textContent = `Análisis actualizado. ${k.total} reserva(s) consultada(s). ${detalleOcupacion}`;
+  ui.recomendacionesEstado.classList.add('recomendaciones__estado--ok');
+  ui.recomendacionesActualizado.textContent = `Última actualización: ${new Intl.DateTimeFormat('es-CO', {
+    dateStyle: 'medium', timeStyle: 'short',
+  }).format(new Date())}`;
+}
+
+async function cargarRecomendaciones() {
+  if (estado.analisisCargando) {
+    estado.analisisPendiente = true;
+    return;
+  }
+  estado.analisisCargando = true;
+  estado.analisisPendiente = false;
+  const version = estado.versionAnalisis;
+  ui.recomendacionesEstado.textContent = 'Consultando reservas y mesas…';
+  ui.recomendacionesEstado.classList.remove('recomendaciones__estado--error', 'recomendaciones__estado--ok');
+  ui.recomendacionesEstado.setAttribute('aria-busy', 'true');
+  ui.recomendacionesActualizado.textContent = '';
+  ui.recomendacionesKpis.innerHTML = '';
+  ui.recomendacionesDias.innerHTML = '';
+  ui.recomendacionesHoras.innerHTML = '';
+  ui.recomendacionesLista.innerHTML = '';
+  ui.botonActualizarRecomendaciones.disabled = true;
+  try {
+    // Solo se consultan los campos analíticos; no se descargan nombres ni contactos.
+    // La función de acceso pagina las reservas para superar el límite por respuesta.
+    const [reservas, mesas] = await Promise.all([obtenerReservasAnalisis(), obtenerMesas()]);
+    if (version !== estado.versionAnalisis) return;
+    const capacidades = new Map(mesas.map((mesa) => [String(mesa.id), mesa.capacidad]));
+    const filas = reservas.map((r) => ({
+      fecha: r.fecha,
+      hora_inicio: r.hora_inicio,
+      num_personas: r.num_personas,
+      estado: r.estado,
+      capacidad: capacidades.get(String(r.mesa_id)),
+    }));
+    pintarRecomendaciones(buildInsights(filas));
+  } catch (error) {
+    if (version !== estado.versionAnalisis) return;
+    ui.recomendacionesEstado.textContent = `No se pudo actualizar el análisis: ${mensajeError(error)}`;
+    ui.recomendacionesEstado.classList.add('recomendaciones__estado--error');
+    ui.recomendacionesActualizado.textContent = '';
+  } finally {
+    if (version === estado.versionAnalisis) {
+      estado.analisisCargando = false;
+      ui.recomendacionesEstado.setAttribute('aria-busy', 'false');
+      ui.botonActualizarRecomendaciones.disabled = false;
+      if (estado.analisisPendiente && estado.vista === 'recomendaciones') {
+        estado.analisisPendiente = false;
+        queueMicrotask(() => cargarRecomendaciones());
+      }
+    }
+  }
+}
+
+ui.botonActualizarRecomendaciones.addEventListener('click', cargarRecomendaciones);
+
+// ---------------------------------------------------------------------
+//
 // Mesas (RF-09, RF-10, RF-13)
 // ---------------------------------------------------------------------
 async function cargarMesas() {

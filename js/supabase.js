@@ -135,6 +135,22 @@ export async function obtenerReservas({ fecha = '', mesaId = '' } = {}) {
   return revisar(await consulta);
 }
 
+// Datos mínimos para Recomendaciones. Pagina para no truncar silenciosamente
+// el análisis en el límite máximo de filas configurado en Supabase.
+export async function obtenerReservasAnalisis() {
+  const tamanoPagina = 500;
+  const filas = [];
+  for (let desde = 0; ; desde += tamanoPagina) {
+    const pagina = revisar(await supabase.from('reservas')
+      .select('mesa_id, num_personas, fecha, hora_inicio, estado')
+      .order('id', { ascending: true })
+      .range(desde, desde + tamanoPagina - 1));
+    filas.push(...pagina);
+    if (pagina.length < tamanoPagina) break;
+  }
+  return filas;
+}
+
 export async function cambiarEstadoReserva(id, estado) {
   return revisar(await supabase.from('reservas').update({ estado }).eq('id', id));
 }

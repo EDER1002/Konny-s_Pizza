@@ -610,3 +610,40 @@ button, input, select, textarea { font: inherit; color: inherit; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .confirmacion__icono path { stroke-dashoffset: 0; }
 }
+
+
+/* ---------- Recomendaciones administrativas ---------- */
+.recomendaciones__estado { margin: 0 0 16px; padding: 10px 12px; border-radius: var(--radio-chico); background: var(--blanco); color: var(--gris); font-size: .9rem; }
+.recomendaciones__estado--ok { color: var(--libre); background: var(--libre-fondo); }
+.recomendaciones__estado--error { color: var(--error); background: var(--error-fondo); }
+.recomendaciones__kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.recomendaciones__kpi, .recomendaciones__panel { min-width: 0; padding: 16px; background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--radio); }
+.recomendaciones__kpi span { display: block; color: var(--gris); font-size: .85rem; }
+.recomendaciones__kpi strong { display: block; margin-top: 5px; color: var(--petroleo); font-size: 1.65rem; }
+.recomendaciones__graficas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.recomendaciones__panel h2 { margin-bottom: 14px; font-size: 1.05rem; }
+.recomendaciones__barras { display: grid; gap: 11px; }
+.recomendaciones__barra { display: grid; grid-template-columns: minmax(76px, 100px) minmax(40px, 1fr) 24px; align-items: center; gap: 9px; font-size: .85rem; }
+.recomendaciones__pista { height: 11px; overflow: hidden; border-radius: 99px; background: var(--fondo); }
+.recomendaciones__pista span { display: block; height: 100%; border-radius: inherit; background: var(--naranja); }
+.recomendaciones__barra strong { text-align: right; }
+.recomendaciones__lista { display: grid; gap: 12px; }
+.recomendaciones__item { padding: 13px; border: 1px solid var(--linea); border-left: 4px solid var(--naranja); border-radius: var(--radio-chico); }
+.recomendaciones__item h3 { margin-bottom: 5px; font-size: .98rem; }
+.recomendaciones__item p { margin-bottom: 7px; font-size: .9rem; }
+.recomendaciones__item small { color: var(--gris); font-size: .82rem; }
+.recomendaciones__vacio, .recomendaciones__nota { color: var(--gris); font-size: .86rem; }
+.recomendaciones__nota { margin-top: 12px; }
+@media (max-width: 760px) {
+  .recomendaciones__kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .recomendaciones__graficas { grid-template-columns: 1fr; }
+}
+@media (max-width: 380px) {
+  .recomendaciones__kpis { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .recomendaciones__kpi { padding: 12px; }
+  .recomendaciones__barra { grid-template-columns: 76px minmax(30px, 1fr) 20px; gap: 6px; }
+}
+
+.recomendaciones__actualizado { margin: -8px 0 10px; color: var(--gris); font-size: .82rem; text-align: right; }
+.recomendaciones__item small { display: block; margin-top: 5px; }
+.recomendaciones__estado[aria-busy="true"] { opacity: .8; }
