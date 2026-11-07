@@ -1,0 +1,49 @@
+name: Selenium E2E - Konny's Pizza
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_full_inactivity:
+        description: 'Ejecutar también la prueba real de inactividad (aprox. 10 minutos)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Pruebas E2E en Vercel
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      E2E_BASE_URL: https://konys-pizza.vercel.app
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_RUN_SLOW_INACTIVITY: ${{ inputs.run_full_inactivity }}
+      SE_AVOID_STATS: 'true'
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+
+      - name: Instalar Selenium solo en el runner
+        run: npm install --no-save --package-lock=false selenium-webdriver@4.52.0
+
+      - name: Ejecutar pruebas del navegador
+        run: node --test --test-reporter=spec tests/e2e/konys-publico.test.js
+
+      - name: Guardar capturas de errores
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencias-selenium
+          path: ${{ runner.temp }}/konys-pizza-selenium/*.png
+          if-no-files-found: ignore
+          retention-days: 7
