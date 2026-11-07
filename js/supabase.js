@@ -15,7 +15,17 @@ try {
 
 export const faltaConfiguracion = !config?.SUPABASE_URL || !config?.SUPABASE_ANON_KEY;
 
-export const supabase = faltaConfiguracion ? null : createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+// La sesión administrativa vive solo en memoria, sin persistencia en el navegador.
+// Al recargar la página se debe volver a ingresar.
+export const OPCIONES_AUTH = Object.freeze({
+  autoRefreshToken: true,
+  persistSession: false,
+  detectSessionInUrl: false,
+});
+
+export const supabase = faltaConfiguracion
+  ? null
+  : createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY, { auth: OPCIONES_AUTH });
 
 // Si Supabase responde con error, lo lanza para que la pantalla lo muestre.
 function revisar({ data, error }) {
@@ -79,30 +89,72 @@ async function esAdmin() {
   return revisar(await supabase.rpc('es_admin')) === true;
 }
 
+async function sesionAdminActiva() {
+  return revisar(await supabase.rpc('sesion_admin_activa')) === true;
+}
+
+async function exigirSesionAdmin() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  if (!data.session) throw new Error('SESION_ADMIN_EXPIRADA');
+  try {
+    // Una operación administrativa también cuenta como actividad válida.
+    // La función no permite renovar un registro que ya superó los cinco minutos.
+    await registrarActividadAdmin();
+  } catch (errorActividad) {
+    const texto = `${errorActividad?.message || ''} ${errorActividad?.code || ''}`;
+    const sesionRechazada = texto.includes('SESION_ADMIN_EXPIRADA')
+      || texto.includes('NO_ES_ADMIN')
+      || texto.includes('JWT expired')
+      || errorActividad?.code === '42501';
+    if (!sesionRechazada) throw errorActividad;
+    try { await cerrarSesion(); } catch { /* RLS mantiene el bloqueo en PostgreSQL. */ }
+    throw new Error('SESION_ADMIN_EXPIRADA', { cause: errorActividad });
+  }
+}
+
+export async function registrarActividadAdmin() {
+  return revisar(await supabase.rpc('registrar_actividad_admin')) === true;
+}
+
 export async function iniciarSesion(email, password) {
   revisar(await supabase.auth.signInWithPassword({ email: email.trim(), password }));
   if (!(await esAdmin())) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
     throw new Error('NO_ES_ADMIN');
+  }
+  try {
+    // Crea el registro asociado al session_id firmado por Supabase Auth.
+    await registrarActividadAdmin();
+  } catch (error) {
+    await supabase.auth.signOut({ scope: 'local' });
+    throw error;
   }
 }
 
 export async function cerrarSesion() {
-  await supabase.auth.signOut();
+  if (!supabase) return;
+  // Borra el registro de actividad y revoca la sesión actual en Supabase Auth.
+  // Si el registro ya expiró o no hay red, signOut sigue siendo el intento final.
+  try { await supabase.rpc('cerrar_sesion_admin'); } catch { /* cierre local a continuación */ }
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  if (error) throw error;
 }
 
-// ¿Hay una sesión abierta de un administrador? (para no pedir la clave al recargar)
+// Sin persistencia no se conserva sesión al recargar. Esta verificación cubre
+// también el caso de una sesión que haya vencido en PostgreSQL.
 export async function haySesionAdmin() {
-  const { data } = await supabase.auth.getSession();
-  if (!data.session) return false;
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) return false;
   try {
-    return await esAdmin();
+    return await sesionAdminActiva();
   } catch {
     return false;
   }
 }
 
 export async function guardarMesa({ id, nombre, zona, capacidad, foto_url, activa = true }) {
+  await exigirSesionAdmin();
   const datos = { nombre: nombre.trim(), zona, capacidad: Number(capacidad), foto_url: foto_url?.trim() || null, activa };
   const consulta = id
     ? supabase.from('mesas').update(datos).eq('id', id)
@@ -111,14 +163,17 @@ export async function guardarMesa({ id, nombre, zona, capacidad, foto_url, activ
 }
 
 export async function borrarMesa(id) {
+  await exigirSesionAdmin();
   return revisar(await supabase.from('mesas').delete().eq('id', id));
 }
 
 export async function cambiarEstadoMesa(id, activa) {
+  await exigirSesionAdmin();
   return revisar(await supabase.from('mesas').update({ activa }).eq('id', id));
 }
 
 export async function guardarHorario({ id, hora_inicio, hora_fin, duracion_slot, activo }) {
+  await exigirSesionAdmin();
   return revisar(await supabase.from('horarios')
     .update({ hora_inicio, hora_fin, duracion_slot: Number(duracion_slot), activo })
     .eq('id', id));
@@ -126,6 +181,7 @@ export async function guardarHorario({ id, hora_inicio, hora_fin, duracion_slot,
 
 // Reservas con el nombre de su mesa. Filtros opcionales por fecha y mesa.
 export async function obtenerReservas({ fecha = '', mesaId = '' } = {}) {
+  await exigirSesionAdmin();
   let consulta = supabase.from('reservas')
     .select('id, mesa_id, cliente_nombre, cliente_contacto, num_personas, fecha, hora_inicio, hora_fin, estado, creado_en, mesas(nombre)')
     .order('fecha', { ascending: false })
@@ -138,6 +194,7 @@ export async function obtenerReservas({ fecha = '', mesaId = '' } = {}) {
 // Datos mínimos para Recomendaciones. Pagina para no truncar silenciosamente
 // el análisis en el límite máximo de filas configurado en Supabase.
 export async function obtenerReservasAnalisis() {
+  await exigirSesionAdmin();
   const tamanoPagina = 500;
   const filas = [];
   for (let desde = 0; ; desde += tamanoPagina) {
@@ -152,10 +209,12 @@ export async function obtenerReservasAnalisis() {
 }
 
 export async function cambiarEstadoReserva(id, estado) {
+  await exigirSesionAdmin();
   return revisar(await supabase.from('reservas').update({ estado }).eq('id', id));
 }
 
 export async function guardarPlato({ id, nombre, categoria, descripcion, precio, disponible = true }) {
+  await exigirSesionAdmin();
   const datos = { nombre: nombre.trim(), categoria, descripcion: descripcion?.trim() || null, precio: Number(precio), disponible };
   const consulta = id
     ? supabase.from('platos').update(datos).eq('id', id)
@@ -164,9 +223,11 @@ export async function guardarPlato({ id, nombre, categoria, descripcion, precio,
 }
 
 export async function borrarPlato(id) {
+  await exigirSesionAdmin();
   return revisar(await supabase.from('platos').delete().eq('id', id));
 }
 
 export async function cambiarDisponibilidadPlato(id, disponible) {
+  await exigirSesionAdmin();
   return revisar(await supabase.from('platos').update({ disponible }).eq('id', id));
 }

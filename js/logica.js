@@ -233,6 +233,7 @@ const MENSAJES = [
   ['platos_precio_check', () => 'El precio no puede ser negativo.'],
   ['mesas_capacidad_check', () => 'La capacidad debe estar entre 1 y 20 personas.'],
   ['NO_ES_ADMIN', () => 'Este usuario no es administrador. Revisa la tabla administradores en Supabase.'],
+  ['SESION_ADMIN_EXPIRADA', () => 'Tu sesión administrativa se cerró por inactividad. Vuelve a ingresar.'],
   ['Invalid login credentials', () => 'Correo o contraseña incorrectos.'],
   ['Email not confirmed', () => 'Primero confirma el correo del administrador en Supabase.'],
   ['JWT expired', () => 'Tu sesión expiró. Vuelve a iniciar sesión.'],

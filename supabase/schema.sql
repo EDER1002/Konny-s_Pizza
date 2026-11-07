@@ -96,6 +96,14 @@ create table public.administradores (
   email text primary key
 );
 
+-- Heartbeat de cada sesión administrativa. No es accesible directamente
+-- desde anon/authenticated; solo lo gestionan funciones SECURITY DEFINER.
+create table public.sesiones_admin_actividad (
+  session_id uuid primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  ultima_actividad timestamptz not null default now()
+);
+
 -- Registro de reservas por origen (solo guarda un hash de la IP, nunca la IP)
 -- para frenar a quien intente llenar el restaurante con reservas falsas.
 create table public.intentos_reserva (
@@ -118,11 +126,68 @@ $$;
 -- ¿El usuario que hace la consulta es administrador?
 create function public.es_admin() returns boolean
 language sql stable security definer set search_path = '' as $$
-  select exists (
+  select auth.uid() is not null and exists (
     select 1 from public.administradores a
     where lower(a.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
   )
 $$;
+
+-- Sesión Auth existente + heartbeat dentro de los últimos cinco minutos.
+create function public.sesion_admin_activa() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select auth.uid() is not null
+    and public.es_admin()
+    and nullif(auth.jwt() ->> 'session_id', '') is not null
+    and exists (
+      select 1
+      from auth.sessions s
+      join public.sesiones_admin_actividad a on a.session_id = s.id
+      where s.id = nullif(auth.jwt() ->> 'session_id', '')::uuid
+        and s.user_id = auth.uid()
+        and a.user_id = auth.uid()
+        and a.ultima_actividad > now() - interval '5 minutes'
+    )
+$$;
+
+create function public.registrar_actividad_admin() returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_usuario uuid := auth.uid();
+  v_sesion uuid := nullif(auth.jwt() ->> 'session_id', '')::uuid;
+begin
+  if v_usuario is null or v_sesion is null or not public.es_admin() then
+    raise exception 'NO_ES_ADMIN' using errcode = '42501';
+  end if;
+  if not exists (
+    select 1 from auth.sessions s where s.id = v_sesion and s.user_id = v_usuario
+  ) then
+    raise exception 'SESION_ADMIN_EXPIRADA' using errcode = '42501';
+  end if;
+  delete from public.sesiones_admin_actividad a
+  where a.ultima_actividad < now() - interval '1 day'
+    and not exists (select 1 from auth.sessions s where s.id = a.session_id);
+  insert into public.sesiones_admin_actividad (session_id, user_id, ultima_actividad)
+  values (v_sesion, v_usuario, now())
+  on conflict (session_id) do update
+    set ultima_actividad = excluded.ultima_actividad
+    where public.sesiones_admin_actividad.user_id = excluded.user_id
+      and public.sesiones_admin_actividad.ultima_actividad > now() - interval '5 minutes';
+  if not found then
+    raise exception 'SESION_ADMIN_EXPIRADA' using errcode = '42501';
+  end if;
+  return true;
+end $$;
+
+create function public.cerrar_sesion_admin() returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_sesion uuid := nullif(auth.jwt() ->> 'session_id', '')::uuid;
+begin
+  if auth.uid() is null or v_sesion is null then return false; end if;
+  delete from public.sesiones_admin_actividad
+  where session_id = v_sesion and user_id = auth.uid();
+  return true;
+end $$;
 
 -- Nunca deja guardar más personas que la capacidad de la mesa.
 create function public.validar_capacidad() returns trigger
@@ -276,15 +341,24 @@ alter table public.horarios        enable row level security;
 alter table public.reservas        enable row level security;
 alter table public.platos          enable row level security;
 alter table public.administradores enable row level security;
+alter table public.sesiones_admin_actividad enable row level security;
 
 create policy "Todos ven las mesas"        on public.mesas    for select to anon, authenticated using (true);
 create policy "Todos ven los horarios"     on public.horarios for select to anon, authenticated using (true);
 create policy "Todos ven la carta"         on public.platos   for select to anon, authenticated using (true);
 
-create policy "El admin gestiona mesas"    on public.mesas    for all to authenticated using (public.es_admin()) with check (public.es_admin());
-create policy "El admin gestiona horarios" on public.horarios for all to authenticated using (public.es_admin()) with check (public.es_admin());
-create policy "El admin gestiona la carta" on public.platos   for all to authenticated using (public.es_admin()) with check (public.es_admin());
-create policy "El admin gestiona reservas" on public.reservas for all to authenticated using (public.es_admin()) with check (public.es_admin());
+create policy "El admin gestiona mesas" on public.mesas for all to authenticated
+  using (public.es_admin() and public.sesion_admin_activa())
+  with check (public.es_admin() and public.sesion_admin_activa());
+create policy "El admin gestiona horarios" on public.horarios for all to authenticated
+  using (public.es_admin() and public.sesion_admin_activa())
+  with check (public.es_admin() and public.sesion_admin_activa());
+create policy "El admin gestiona la carta" on public.platos for all to authenticated
+  using (public.es_admin() and public.sesion_admin_activa())
+  with check (public.es_admin() and public.sesion_admin_activa());
+create policy "El admin gestiona reservas" on public.reservas for all to authenticated
+  using (public.es_admin() and public.sesion_admin_activa())
+  with check (public.es_admin() and public.sesion_admin_activa());
 
 alter table public.intentos_reserva enable row level security;
 
@@ -297,15 +371,18 @@ revoke all on all functions in schema public from public, anon, authenticated;
 
 -- Público: solo leer mesas, horarios y carta.
 grant select on public.mesas, public.horarios, public.platos to anon, authenticated;
--- Administrador (sesión iniciada): gestiona todo salvo TRUNCATE, y RLS exige es_admin().
+-- Administrador con sesión activa: gestiona todo salvo TRUNCATE; RLS exige es_admin() y sesión no inactiva.
 grant select, insert, update, delete on public.mesas, public.horarios, public.platos, public.reservas to authenticated;
 grant usage on all sequences in schema public to authenticated;
 -- administradores e intentos_reserva: nadie desde la app (solo el dueño de la base).
 
--- Solo estas tres funciones se pueden llamar desde la app.
+-- Funciones públicas de reserva y funciones administrativas autenticadas.
 grant execute on function public.crear_reserva(bigint, date, time, text, integer, text) to anon, authenticated;
 grant execute on function public.obtener_ocupados(date) to anon, authenticated;
-grant execute on function public.es_admin() to anon, authenticated;
+grant execute on function public.es_admin() to authenticated;
+grant execute on function public.sesion_admin_activa() to authenticated;
+grant execute on function public.registrar_actividad_admin() to authenticated;
+grant execute on function public.cerrar_sesion_admin() to authenticated;
 
 -- Lo que se cree en el futuro tampoco debe heredar permisos amplios.
 alter default privileges in schema public revoke all on tables    from anon, authenticated;

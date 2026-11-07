@@ -3,7 +3,7 @@
 // (RF-09, RF-10, RF-13), horarios (RF-11), reservas (RF-12) y carta (RF-14).
 // =====================================================================
 import {
-  faltaConfiguracion, iniciarSesion, cerrarSesion, haySesionAdmin,
+  faltaConfiguracion, iniciarSesion, cerrarSesion, haySesionAdmin, registrarActividadAdmin,
   obtenerMesas, guardarMesa, borrarMesa, cambiarEstadoMesa,
   obtenerHorarios, guardarHorario,
   obtenerReservas, obtenerReservasAnalisis, cambiarEstadoReserva,
@@ -16,10 +16,17 @@ import {
 } from './logica.js';
 import { abrirModal, cerrarModal, mostrarToast, conPausa, AVISO_CONFIG } from './ui.js';
 import { buildInsights } from './recomendaciones.js';
+import { crearControlInactividad } from './inactividad.js';
 
 const $ = (selector) => document.querySelector(selector);
 const POR_PAGINA = 10;
 const VISTAS = ['mesas', 'horarios', 'reservas', 'carta', 'recomendaciones'];
+const TIEMPO_ENTRE_HEARTBEATS_MS = 5000;
+let controlInactividad = null;
+let ultimaActividadServidor = 0;
+let heartbeatEnCurso = false;
+let cerrandoSesion = false;
+
 const ESTADOS_RESERVA = [
   ['confirmada', 'Confirmada'],
   ['cancelada', 'Cancelada'],
@@ -68,6 +75,63 @@ const ui = {
   formPlato: $('#form-plato'),
 };
 
+// El temporizador local mejora la experiencia; PostgreSQL aplica el mismo
+// vencimiento mediante RLS, incluso si se intenta saltar el frontend.
+async function finalizarSesionAdministrativa({ porInactividad = false } = {}) {
+  if (cerrandoSesion) return;
+  cerrandoSesion = true;
+  controlInactividad?.detener();
+  controlInactividad = null;
+  estado.dejarDeEscuchar?.();
+  estado.dejarDeEscuchar = null;
+  estado.versionAnalisis += 1;
+  estado.analisisCargando = false;
+  estado.analisisPendiente = false;
+  try {
+    await cerrarSesion();
+  } catch (error) {
+    console.error('No se pudo confirmar el cierre remoto de la sesión:', error);
+  }
+  mostrarAcceso();
+  if (porInactividad) {
+    ui.errorAcceso.textContent = 'Tu sesión administrativa se cerró por cinco minutos de inactividad. Vuelve a ingresar.';
+    ui.errorAcceso.hidden = false;
+  }
+  cerrandoSesion = false;
+}
+
+async function reportarActividadAlServidor() {
+  const ahora = Date.now();
+  if (heartbeatEnCurso || ahora - ultimaActividadServidor < TIEMPO_ENTRE_HEARTBEATS_MS) return;
+  heartbeatEnCurso = true;
+  try {
+    await registrarActividadAdmin();
+    ultimaActividadServidor = Date.now();
+  } catch (error) {
+    if (error?.message === 'SESION_ADMIN_EXPIRADA' || error?.message === 'NO_ES_ADMIN') {
+      await finalizarSesionAdministrativa({ porInactividad: true });
+    } else {
+      // Si falla la conexión, RLS seguirá negando operaciones cuando venza el
+      // último heartbeat aceptado por PostgreSQL.
+      console.error('No se pudo renovar la actividad administrativa:', error);
+    }
+  } finally {
+    heartbeatEnCurso = false;
+  }
+}
+
+function iniciarControlInactividad() {
+  controlInactividad?.detener();
+  ultimaActividadServidor = Date.now(); // iniciarSesion ya creó el heartbeat inicial
+  controlInactividad = crearControlInactividad({
+    destino: document,
+    ventana: window,
+    alExpirar: () => finalizarSesionAdministrativa({ porInactividad: true }),
+    alRegistrarActividad: () => { void reportarActividadAlServidor(); },
+  });
+  controlInactividad.iniciar();
+}
+
 // Ejecuta una acción y muestra el error en un aviso si algo falla.
 async function intentar(accion, { exito } = {}) {
   try {
@@ -75,6 +139,10 @@ async function intentar(accion, { exito } = {}) {
     if (exito) mostrarToast(exito);
     return resultado;
   } catch (error) {
+    if (error?.message === 'SESION_ADMIN_EXPIRADA') {
+      await finalizarSesionAdministrativa({ porInactividad: true });
+      return undefined;
+    }
     const mensaje = mensajeError(error);
     if (mensaje === MENSAJE_GENERICO) console.error(error); // solo los errores que no conocemos
     mostrarToast(mensaje, 'error');
@@ -120,15 +188,7 @@ ui.formAcceso.addEventListener('submit', async (evento) => {
   }
 });
 
-$('#boton-salir').addEventListener('click', async () => {
-  estado.dejarDeEscuchar?.();
-  estado.dejarDeEscuchar = null;
-  estado.versionAnalisis += 1;
-  estado.analisisCargando = false;
-  estado.analisisPendiente = false;
-  await cerrarSesion();
-  mostrarAcceso();
-});
+$('#boton-salir').addEventListener('click', () => finalizarSesionAdministrativa());
 
 // ---------------------------------------------------------------------
 // Panel y navegación entre secciones
@@ -136,6 +196,7 @@ $('#boton-salir').addEventListener('click', async () => {
 async function mostrarPanel() {
   ui.acceso.hidden = true;
   ui.panel.hidden = false;
+  iniciarControlInactividad();
   await cargarMesas(); // las mesas también se usan en el filtro de reservas
   const inicial = location.hash.slice(1);
   await cambiarVista(VISTAS.includes(inicial) ? inicial : 'mesas');
@@ -248,6 +309,10 @@ async function cargarRecomendaciones() {
     pintarRecomendaciones(buildInsights(filas));
   } catch (error) {
     if (version !== estado.versionAnalisis) return;
+    if (error?.message === 'SESION_ADMIN_EXPIRADA') {
+      await finalizarSesionAdministrativa({ porInactividad: true });
+      return;
+    }
     ui.recomendacionesEstado.textContent = `No se pudo actualizar el análisis: ${mensajeError(error)}`;
     ui.recomendacionesEstado.classList.add('recomendaciones__estado--error');
     ui.recomendacionesActualizado.textContent = '';
@@ -340,6 +405,10 @@ ui.formMesa.addEventListener('submit', async (evento) => {
     mostrarToast('Mesa guardada.');
     await cargarMesas();
   } catch (e) {
+    if (e?.message === 'SESION_ADMIN_EXPIRADA') {
+      await finalizarSesionAdministrativa({ porInactividad: true });
+      return;
+    }
     error.textContent = mensajeError(e);
     error.hidden = false;
   }
@@ -539,6 +608,10 @@ ui.formPlato.addEventListener('submit', async (evento) => {
     mostrarToast('Plato guardado.');
     await cargarPlatos();
   } catch (e) {
+    if (e?.message === 'SESION_ADMIN_EXPIRADA') {
+      await finalizarSesionAdministrativa({ porInactividad: true });
+      return;
+    }
     error.textContent = mensajeError(e);
     error.hidden = false;
   }
