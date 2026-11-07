@@ -6,7 +6,6 @@ Antes, las reservas se hacían por llamada, WhatsApp o en persona, y eso causaba
 
 - **App desplegada:** <https://konys-pizza.vercel.app>
 - **Panel de administración:** <https://konys-pizza.vercel.app/admin>
-- **Video explicativo:** _(pega aquí el enlace de YouTube o Drive)_
 
 ## Qué hace
 
