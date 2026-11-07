@@ -185,7 +185,29 @@ test('un formulario de reserva inválido no llega a confirmar una reserva', { ti
 
     await driver.findElement(By.id('campo-nombre')).sendKeys('A');
     await driver.findElement(By.id('campo-personas')).sendKeys('1');
-    await driver.findElement(By.id('boton-confirmar')).click();
+
+    const botonConfirmar = await driver.findElement(By.id('boton-confirmar'));
+
+    // El formulario está dentro de un modal con desplazamiento propio.
+    // Desplazamos el contenedor y el botón hasta el área visible antes del clic.
+    await driver.executeScript((boton) => {
+      const modalCaja = boton.closest('.modal__caja');
+      if (modalCaja) modalCaja.scrollTop = modalCaja.scrollHeight;
+      boton.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+    }, botonConfirmar);
+
+    // Evita falsos fallos por un botón oculto o cubierto por otra capa.
+    await driver.wait(async () => driver.executeScript((boton) => {
+      const rect = boton.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      if (x < 0 || x >= window.innerWidth || y < 0 || y >= window.innerHeight) return false;
+      const elementoSuperior = document.elementFromPoint(x, y);
+      return elementoSuperior === boton || boton.contains(elementoSuperior);
+    }, botonConfirmar), 5_000,
+    'El botón de confirmación está fuera de vista o cubierto por otro elemento.');
+
+    await botonConfirmar.click();
 
     await driver.wait(async () => {
       const error = await driver.findElement(By.id('error-nombre')).getText();

@@ -26,10 +26,10 @@ jobs:
 
     steps:
       - name: Descargar repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Preparar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24.22.1
 
@@ -41,7 +41,7 @@ jobs:
 
       - name: Guardar capturas de errores
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: evidencias-selenium
           path: ${{ runner.temp }}/konys-pizza-selenium/*.png
