@@ -196,17 +196,6 @@ test('un formulario de reserva inválido no llega a confirmar una reserva', { ti
       boton.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
     }, botonConfirmar);
 
-    // Evita falsos fallos por un botón oculto o cubierto por otra capa.
-    await driver.wait(async () => driver.executeScript((boton) => {
-      const rect = boton.getBoundingClientRect();
-      const x = rect.left + rect.width / 2;
-      const y = rect.top + rect.height / 2;
-      if (x < 0 || x >= window.innerWidth || y < 0 || y >= window.innerHeight) return false;
-      const elementoSuperior = document.elementFromPoint(x, y);
-      return elementoSuperior === boton || boton.contains(elementoSuperior);
-    }, botonConfirmar), 5_000,
-    'El botón de confirmación está fuera de vista o cubierto por otro elemento.');
-
     // Diagnóstico de solo lectura antes del clic: conserva evidencia del modal
     // abierto y registra qué elemento recibe el hit-test en la zona del botón.
     const diagnosticoModal = await driver.executeScript((boton) => {
@@ -286,6 +275,17 @@ test('un formulario de reserva inválido no llega a confirmar una reserva', { ti
     const capturaModal = join(carpetaEvidencias, 'diagnostico-modal-reserva-antes-del-clic.png');
     await writeFile(capturaModal, await driver.takeScreenshot(), 'base64');
     console.error(`Captura del modal antes del clic: ${capturaModal}`);
+
+    // Evita falsos fallos por un botón oculto o cubierto por otra capa.
+    await driver.wait(async () => driver.executeScript((boton) => {
+      const rect = boton.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      if (x < 0 || x >= window.innerWidth || y < 0 || y >= window.innerHeight) return false;
+      const elementoSuperior = document.elementFromPoint(x, y);
+      return elementoSuperior === boton || boton.contains(elementoSuperior);
+    }, botonConfirmar), 5_000,
+    'El botón de confirmación está fuera de vista o cubierto por otro elemento.');
 
     await botonConfirmar.click();
 
