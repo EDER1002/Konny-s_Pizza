@@ -207,6 +207,86 @@ test('un formulario de reserva inválido no llega a confirmar una reserva', { ti
     }, botonConfirmar), 5_000,
     'El botón de confirmación está fuera de vista o cubierto por otro elemento.');
 
+    // Diagnóstico de solo lectura antes del clic: conserva evidencia del modal
+    // abierto y registra qué elemento recibe el hit-test en la zona del botón.
+    const diagnosticoModal = await driver.executeScript((boton) => {
+      const describir = (elemento) => {
+        if (!elemento) return null;
+        const estilo = getComputedStyle(elemento);
+        const rect = elemento.getBoundingClientRect();
+        return {
+          tag: elemento.tagName,
+          id: elemento.id || null,
+          clases: typeof elemento.className === 'string' ? elemento.className : null,
+          texto: (elemento.innerText || elemento.textContent || '').trim().slice(0, 160),
+          rect: {
+            x: Math.round(rect.x), y: Math.round(rect.y),
+            top: Math.round(rect.top), right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom), left: Math.round(rect.left),
+            width: Math.round(rect.width), height: Math.round(rect.height),
+          },
+          estilo: {
+            display: estilo.display,
+            visibility: estilo.visibility,
+            position: estilo.position,
+            zIndex: estilo.zIndex,
+            pointerEvents: estilo.pointerEvents,
+            overflow: estilo.overflow,
+            opacity: estilo.opacity,
+          },
+        };
+      };
+
+      const modal = document.querySelector('#modal-reserva');
+      const caja = modal?.querySelector('.modal__caja');
+      const rect = boton.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const enViewport = x >= 0 && x < window.innerWidth && y >= 0 && y < window.innerHeight;
+      const elementosEnPunto = enViewport ? document.elementsFromPoint(x, y) : [];
+
+      return {
+        readyState: document.readyState,
+        viewport: { width: window.innerWidth, height: window.innerHeight, dpr: window.devicePixelRatio },
+        scroll: { x: window.scrollX, y: window.scrollY },
+        bodyOverflow: getComputedStyle(document.body).overflow,
+        activeElement: describir(document.activeElement),
+        modal: modal ? {
+          hidden: modal.hidden,
+          ...describir(modal),
+        } : null,
+        cajaModal: caja ? {
+          ...describir(caja),
+          scrollTop: caja.scrollTop,
+          scrollHeight: caja.scrollHeight,
+          clientHeight: caja.clientHeight,
+          scrollBottom: caja.scrollHeight - caja.clientHeight - caja.scrollTop,
+        } : null,
+        boton: {
+          ...describir(boton),
+          disabled: boton.disabled,
+          type: boton.type,
+          form: boton.form?.id || null,
+          centroEnViewport: enViewport,
+          centro: { x: Math.round(x), y: Math.round(y) },
+        },
+        elementosEnCentro: elementosEnPunto.slice(0, 8).map(describir),
+        overlaysVisibles: [...document.querySelectorAll('.modal, .modal__fondo, .encabezado, .toast')]
+          .filter((elemento) => {
+            const estilo = getComputedStyle(elemento);
+            return estilo.display !== 'none' && estilo.visibility !== 'hidden';
+          })
+          .map(describir),
+      };
+    }, botonConfirmar);
+
+    console.error('DIAGNOSTICO_MODAL_RESERVA=' + JSON.stringify(diagnosticoModal, null, 2));
+    const carpetaEvidencias = join(process.env.RUNNER_TEMP || tmpdir(), 'konys-pizza-selenium');
+    await mkdir(carpetaEvidencias, { recursive: true });
+    const capturaModal = join(carpetaEvidencias, 'diagnostico-modal-reserva-antes-del-clic.png');
+    await writeFile(capturaModal, await driver.takeScreenshot(), 'base64');
+    console.error(`Captura del modal antes del clic: ${capturaModal}`);
+
     await botonConfirmar.click();
 
     await driver.wait(async () => {
