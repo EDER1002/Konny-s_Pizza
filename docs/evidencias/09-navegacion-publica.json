@@ -1,0 +1,158 @@
+{
+  "fecha": "2026-11-08T21:55:15.509Z",
+  "url": "https://konys-pizza.vercel.app",
+  "pruebas": [
+    {
+      "id": "API-01",
+      "accion": "Leer mesas como anónimo",
+      "esperado": "Lectura pública permitida",
+      "obtenido": "status=200, filas=2, columnas=id,nombre,zona,capacidad,activa,foto_url,creado_en",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "API-02",
+      "accion": "Leer horarios como anónimo",
+      "esperado": "Lectura pública permitida",
+      "obtenido": "status=200, filas=2, columnas=id,dia_semana,jornada,hora_inicio,hora_fin,duracion_slot,activo",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "API-03",
+      "accion": "Leer platos como anónimo",
+      "esperado": "Lectura pública permitida",
+      "obtenido": "status=200, filas=2, columnas=id,nombre,categoria,descripcion,precio,disponible",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "API-04",
+      "accion": "Leer reservas como anónimo",
+      "esperado": "Acceso denegado para anónimo",
+      "obtenido": "status=401, error=42501",
+      "estado": "BLOQUEADA CORRECTAMENTE",
+      "evidencia": ""
+    },
+    {
+      "id": "API-05",
+      "accion": "Leer campos personales de reservas como anónimo",
+      "esperado": "Acceso denegado para anónimo",
+      "obtenido": "status=401, error=42501",
+      "estado": "BLOQUEADA CORRECTAMENTE",
+      "evidencia": ""
+    },
+    {
+      "id": "API-06",
+      "accion": "Leer administradores como anónimo",
+      "esperado": "Acceso denegado para anónimo",
+      "obtenido": "status=401, error=42501",
+      "estado": "BLOQUEADA CORRECTAMENTE",
+      "evidencia": ""
+    },
+    {
+      "id": "API-07",
+      "accion": "Leer sesiones administrativas como anónimo",
+      "esperado": "Acceso denegado para anónimo",
+      "obtenido": "status=401, error=42501",
+      "estado": "BLOQUEADA CORRECTAMENTE",
+      "evidencia": ""
+    },
+    {
+      "id": "API-08",
+      "accion": "Leer ocupación pública sin datos personales",
+      "esperado": "Solo mesa y horario, sin datos personales",
+      "obtenido": "status=200, filas=1, columnas=mesa_id,hora_inicio,hora_fin",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "API-09",
+      "accion": "Invocar es_admin() como anónimo",
+      "esperado": "Acceso denegado para anónimo",
+      "obtenido": "status=401, error=42501",
+      "estado": "BLOQUEADA CORRECTAMENTE",
+      "evidencia": ""
+    },
+    {
+      "id": "API-10",
+      "accion": "Invocar sesion_admin_activa() como anónimo",
+      "esperado": "Acceso denegado para anónimo",
+      "obtenido": "status=401, error=42501",
+      "estado": "BLOQUEADA CORRECTAMENTE",
+      "evidencia": ""
+    },
+    {
+      "id": "NAV-01",
+      "accion": "Cargar la página principal",
+      "esperado": "Título, mesas y carta cargados",
+      "obtenido": "título=\"Reserva tu mesa en Konys Pizza\", mesas=6, platos=17, pestañas=3",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "NAV-02",
+      "accion": "Mostrar horario de hoy y horario del pie",
+      "esperado": "Textos no vacíos",
+      "obtenido": "hoy=\"Hoy atendemos de 12:30 a 14:30 y de 17:00 a 23:00.\", pie=\"Todos los días, de 12:30 a 14:30 y de 17:00 a 23:00.\"",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "NAV-03",
+      "accion": "Abrir el menú en móvil",
+      "esperado": "Botón visible, menú abierto y aria-expanded=true",
+      "obtenido": "botón visible=true, abierto=true, aria-expanded=true",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "NAV-04",
+      "accion": "Cerrar el menú al elegir una sección",
+      "esperado": "Menú cerrado y aria-expanded=false",
+      "obtenido": "abierto=false, aria-expanded=false",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "NAV-05",
+      "accion": "Recorrer las pestañas de la carta",
+      "esperado": "Cada pestaña muestra platos y queda seleccionada",
+      "obtenido": "[{\"categoria\":\"pizzas\",\"platos\":17,\"seleccionada\":\"pizzas\"},{\"categoria\":\"entradas\",\"platos\":3,\"seleccionada\":\"entradas\"},{\"categoria\":\"bebidas\",\"platos\":6,\"seleccionada\":\"bebidas\"}]",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "NAV-06",
+      "accion": "Abrir el modal de reserva de una mesa",
+      "esperado": "Título, calendario y horarios visibles",
+      "obtenido": "título=\"Reservar Mesa 1\", días=30, slots=8, libres=5",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "NAV-07",
+      "accion": "Seleccionar un horario libre",
+      "esperado": "El resumen muestra fecha y hora elegidas",
+      "obtenido": "hora=18:00, resumen=\"Resumen MesaMesa 1, Terraza FechaDom 8 nov 2026 Hora18:00 a 19:00 Duración60 minutos\"",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "NAV-08",
+      "accion": "Cambiar de mes en el calendario",
+      "esperado": "El mes mostrado cambia",
+      "obtenido": "antes=\"Noviembre 2026\", después=\"Diciembre 2026\"",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "NAV-09",
+      "accion": "Cerrar el modal de reserva",
+      "esperado": "Modal oculto",
+      "obtenido": "hidden=true",
+      "estado": "APROBADA",
+      "evidencia": ""
+    }
+  ]
+}

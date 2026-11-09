@@ -1,0 +1,154 @@
+{
+  "fecha": "2026-11-08T21:55:15.509Z",
+  "url": "https://konys-pizza.vercel.app",
+  "consultas": [
+    {
+      "accion": "Leer mesas como anónimo",
+      "columnas": [
+        "id",
+        "nombre",
+        "zona",
+        "capacidad",
+        "activa",
+        "foto_url",
+        "creado_en"
+      ],
+      "dato": null,
+      "error": null,
+      "filas": 2,
+      "id": "API-01",
+      "status": 200
+    },
+    {
+      "accion": "Leer horarios como anónimo",
+      "columnas": [
+        "id",
+        "dia_semana",
+        "jornada",
+        "hora_inicio",
+        "hora_fin",
+        "duracion_slot",
+        "activo"
+      ],
+      "dato": null,
+      "error": null,
+      "filas": 2,
+      "id": "API-02",
+      "status": 200
+    },
+    {
+      "accion": "Leer platos como anónimo",
+      "columnas": [
+        "id",
+        "nombre",
+        "categoria",
+        "descripcion",
+        "precio",
+        "disponible"
+      ],
+      "dato": null,
+      "error": null,
+      "filas": 2,
+      "id": "API-03",
+      "status": 200
+    },
+    {
+      "accion": "Leer reservas como anónimo",
+      "columnas": [],
+      "dato": null,
+      "error": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.reservas TO anon;",
+        "message": "permission denied for table reservas"
+      },
+      "filas": null,
+      "id": "API-04",
+      "status": 401
+    },
+    {
+      "accion": "Leer campos personales de reservas como anónimo",
+      "columnas": [],
+      "dato": null,
+      "error": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.reservas TO anon;",
+        "message": "permission denied for table reservas"
+      },
+      "filas": null,
+      "id": "API-05",
+      "status": 401
+    },
+    {
+      "accion": "Leer administradores como anónimo",
+      "columnas": [],
+      "dato": null,
+      "error": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.administradores TO anon;",
+        "message": "permission denied for table administradores"
+      },
+      "filas": null,
+      "id": "API-06",
+      "status": 401
+    },
+    {
+      "accion": "Leer sesiones administrativas como anónimo",
+      "columnas": [],
+      "dato": null,
+      "error": {
+        "code": "42501",
+        "details": null,
+        "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.sesiones_admin_actividad TO anon;",
+        "message": "permission denied for table sesiones_admin_actividad"
+      },
+      "filas": null,
+      "id": "API-07",
+      "status": 401
+    },
+    {
+      "accion": "Leer ocupación pública sin datos personales",
+      "columnas": [
+        "mesa_id",
+        "hora_inicio",
+        "hora_fin"
+      ],
+      "error": null,
+      "fechaProbada": "2026-11-08",
+      "filas": 1,
+      "id": "API-08",
+      "status": 200
+    },
+    {
+      "accion": "Invocar es_admin() como anónimo",
+      "columnas": [],
+      "dato": null,
+      "error": {
+        "code": "42501",
+        "details": null,
+        "hint": null,
+        "message": "permission denied for function es_admin"
+      },
+      "filas": null,
+      "id": "API-09",
+      "status": 401
+    },
+    {
+      "accion": "Invocar sesion_admin_activa() como anónimo",
+      "columnas": [],
+      "dato": null,
+      "error": {
+        "code": "42501",
+        "details": null,
+        "hint": null,
+        "message": "permission denied for function sesion_admin_activa"
+      },
+      "filas": null,
+      "id": "API-10",
+      "status": 401
+    }
+  ],
+  "incidencias": []
+}

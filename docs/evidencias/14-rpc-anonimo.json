@@ -1,0 +1,33 @@
+{
+  "fecha": "2026-11-09T00:34:41.095Z",
+  "url": "https://konys-pizza.vercel.app/",
+  "nota": "Llamadas RPC sin iniciar sesion, desde el cliente publico. Solo se registran status, data y mensajes de error; no se guardan tokens.",
+  "cerrar_sesion_admin": {
+    "code": "42501",
+    "data": null,
+    "error": "permission denied for function cerrar_sesion_admin",
+    "status": 401
+  },
+  "es_admin": {
+    "code": "42501",
+    "data": null,
+    "error": "permission denied for function es_admin",
+    "status": 401
+  },
+  "getSession": {
+    "error": null,
+    "session": false
+  },
+  "registrar_actividad_admin": {
+    "code": "42501",
+    "data": null,
+    "error": "permission denied for function registrar_actividad_admin",
+    "status": 401
+  },
+  "sesion_admin_activa": {
+    "code": "42501",
+    "data": null,
+    "error": "permission denied for function sesion_admin_activa",
+    "status": 401
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "fecha": "2026-11-08T21:55:15.509Z",
+  "url": "https://konys-pizza.vercel.app",
+  "pruebas": [
+    {
+      "id": "VAL-01",
+      "accion": "Enviar formulario vacío",
+      "esperado": "Error de validación y sin llamada a crear_reserva",
+      "obtenido": "nombre=\"Escribe tu nombre (mínimo 2 letras).\", contacto=\"\", personas=\"Escribe el número de personas.\", rpc=0",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-02",
+      "accion": "Nombre de una sola letra",
+      "esperado": "Error de validación y sin llamada a crear_reserva",
+      "obtenido": "nombre=\"Escribe tu nombre (mínimo 2 letras).\", contacto=\"\", personas=\"\", rpc=0",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-03",
+      "accion": "Nombre con etiquetas HTML",
+      "esperado": "Error de validación y sin llamada a crear_reserva",
+      "obtenido": "nombre=\"El nombre no puede llevar los símbolos < o >.\", contacto=\"\", personas=\"\", rpc=0",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-04",
+      "accion": "Teléfono con letras",
+      "esperado": "Error de validación y sin llamada a crear_reserva",
+      "obtenido": "nombre=\"\", contacto=\"Escribe un teléfono válido o déjalo vacío.\", personas=\"\", rpc=0",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-05",
+      "accion": "Teléfono demasiado corto",
+      "esperado": "Error de validación y sin llamada a crear_reserva",
+      "obtenido": "nombre=\"\", contacto=\"Escribe un teléfono válido o déjalo vacío.\", personas=\"\", rpc=0",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-06",
+      "accion": "Teléfono válido con otro campo inválido",
+      "esperado": "Error de validación y sin llamada a crear_reserva",
+      "obtenido": "nombre=\"\", contacto=\"\", personas=\"Escribe el número de personas.\", rpc=0",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-07",
+      "accion": "Personas por encima de la capacidad (2)",
+      "esperado": "Error de validación y sin llamada a crear_reserva",
+      "obtenido": "nombre=\"\", contacto=\"\", personas=\"Esta mesa es para máximo 2 personas.\", rpc=0",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-08",
+      "accion": "Personas decimales",
+      "esperado": "Error de validación y sin llamada a crear_reserva",
+      "obtenido": "nombre=\"\", contacto=\"\", personas=\"Escribe el número de personas.\", rpc=0",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-09",
+      "accion": "Personas en cero",
+      "esperado": "Error de validación y sin llamada a crear_reserva",
+      "obtenido": "nombre=\"\", contacto=\"\", personas=\"Escribe el número de personas.\", rpc=0",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-10",
+      "accion": "Pulsar un horario ocupado",
+      "esperado": "Mensaje específico al pulsar el horario",
+      "obtenido": "mensaje=\"Ese horario ya está ocupado. Elige otro, por favor.\"",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "VAL-11",
+      "accion": "Pulsar un horario ya pasado",
+      "esperado": "Mensaje específico al pulsar el horario",
+      "obtenido": "mensaje=\"Esa hora ya pasó. Elige otra, por favor.\"",
+      "estado": "APROBADA",
+      "evidencia": ""
+    }
+  ]
+}

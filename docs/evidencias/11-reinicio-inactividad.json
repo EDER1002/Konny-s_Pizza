@@ -1,0 +1,56 @@
+{
+  "fase": 2,
+  "prueba": "Reinicio del contador de inactividad por interacción válida",
+  "fecha": "2026-11-09T00:21:50.017Z",
+  "url": "https://konys-pizza.vercel.app/admin",
+  "pasos": [
+    {
+      "id": "ACT-01",
+      "accion": "Iniciar sesión administrativa",
+      "esperado": "Panel visible y acceso oculto",
+      "obtenido": "{\"accesoVisible\":false,\"documentHidden\":false,\"mensaje\":\"\",\"panelVisible\":true}",
+      "estado": "APROBADA",
+      "evidencia": "",
+      "t": 13
+    },
+    {
+      "id": "ACT-02",
+      "accion": "Esperar 4 min 10 s sin actividad",
+      "esperado": "La sesión sigue activa y sin heartbeats",
+      "obtenido": "{\"accesoVisible\":false,\"documentHidden\":false,\"mensaje\":\"\",\"panelVisible\":true}, rpc=[]",
+      "estado": "APROBADA",
+      "evidencia": "",
+      "t": 263
+    },
+    {
+      "id": "ACT-03",
+      "accion": "Realizar una interacción válida a los 4 min 10 s",
+      "esperado": "El clic se registra, el panel sigue visible y el heartbeat responde 200",
+      "obtenido": "{\"accesoVisible\":false,\"documentHidden\":false,\"mensaje\":\"\",\"panelVisible\":true}, heartbeat=[{\"error\":null,\"metodo\":\"POST\",\"status\":200,\"url\":\"/rest/v1/rpc/registrar_actividad_admin\"}]",
+      "estado": "APROBADA",
+      "evidencia": "",
+      "t": 264
+    },
+    {
+      "id": "ACT-04",
+      "accion": "Comprobar a los 6 min del login y 2 min del clic",
+      "esperado": "Panel visible y heartbeat renovado a los 2 min del clic",
+      "obtenido": "{\"accesoVisible\":false,\"documentHidden\":false,\"mensaje\":\"\",\"panelVisible\":true}, rpc=[{\"error\":null,\"metodo\":\"POST\",\"status\":200,\"url\":\"/rest/v1/rpc/registrar_actividad_admin\"}]",
+      "estado": "APROBADA",
+      "evidencia": "16-admin-tras-reinicio.png",
+      "t": 385
+    },
+    {
+      "id": "ACT-05",
+      "accion": "Esperar 5 min 15 s desde el clic",
+      "esperado": "Cierre automático y sesión no recuperable",
+      "obtenido": "{\"accesoVisible\":true,\"documentHidden\":false,\"mensaje\":\"Tu sesión administrativa se cerró por cinco minutos de inactividad. Vuelve a ingresar.\",\"panelVisible\":false}, cierre=[{\"error\":null,\"metodo\":\"POST\",\"status\":200,\"url\":\"/rest/v1/rpc/cerrar_sesion_admin\"}]",
+      "estado": "APROBADA",
+      "evidencia": "17-admin-cierre-final.png",
+      "t": 579
+    }
+  ],
+  "incidencias": [],
+  "fechaFin": "2026-11-09T00:31:28.636Z",
+  "duracionSegundos": 579
+}

@@ -1,0 +1,67 @@
+{
+  "fecha": "2026-11-09T00:21:33.177Z",
+  "url": "https://konys-pizza.vercel.app/admin",
+  "nota": "Diagnostico de la sesion administrativa tras el login. No contiene credenciales ni tokens.",
+  "antes": {
+    "getSession": {
+      "error": null,
+      "session": false
+    },
+    "getUser": {
+      "error": "Auth session missing!",
+      "user": false
+    },
+    "hay": false,
+    "rpc": {
+      "data": null,
+      "error": "permission denied for function sesion_admin_activa",
+      "status": 401
+    }
+  },
+  "despues": {
+    "getSession": {
+      "error": null,
+      "session": false
+    },
+    "getUser": {
+      "error": "Auth session missing!",
+      "user": false
+    },
+    "hay": false,
+    "log": [
+      {
+        "auth": true,
+        "error": null,
+        "metodo": "POST",
+        "status": 401,
+        "url": "/rest/v1/rpc/sesion_admin_activa"
+      },
+      {
+        "auth": true,
+        "error": null,
+        "metodo": "POST",
+        "status": 200,
+        "url": "/rest/v1/rpc/registrar_actividad_admin"
+      },
+      {
+        "auth": true,
+        "error": null,
+        "metodo": "GET",
+        "status": 200,
+        "url": "/rest/v1/horarios"
+      },
+      {
+        "auth": true,
+        "error": null,
+        "metodo": "POST",
+        "status": 401,
+        "url": "/rest/v1/rpc/sesion_admin_activa"
+      }
+    ],
+    "rpc": {
+      "data": null,
+      "error": "permission denied for function sesion_admin_activa",
+      "status": 401
+    }
+  }
+}

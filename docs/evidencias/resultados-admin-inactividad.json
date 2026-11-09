@@ -1,0 +1,78 @@
+{
+  "fecha": "2026-11-08T21:41:56.508Z",
+  "url": "https://konys-pizza.vercel.app/admin",
+  "pruebas": [
+    {
+      "id": "C1.0",
+      "accion": "Abrir /admin sin sesión",
+      "esperado": "Formulario de acceso visible y panel oculto",
+      "obtenido": "acceso visible, panel visible=false",
+      "estado": "APROBADA",
+      "evidencia": "/home/eder/Konny-s_Pizza/docs/evidencias/01-acceso-sin-sesion.png"
+    },
+    {
+      "id": "C1.1",
+      "accion": "Iniciar sesión con la cuenta autorizada",
+      "esperado": "Panel administrativo visible",
+      "obtenido": "Panel visible tras el envío del formulario",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "C2",
+      "accion": "Comprobar que el panel administrativo se muestra correctamente",
+      "esperado": "Panel y vista Mesas visibles, con filas o estado vacío",
+      "obtenido": "vista-mesas visible=true, filas en tabla=6",
+      "estado": "APROBADA",
+      "evidencia": "/home/eder/Konny-s_Pizza/docs/evidencias/02-panel-autenticado.png"
+    },
+    {
+      "id": "C3",
+      "accion": "Verificar que credenciales o tokens de sesión no se guardan en localStorage ni sessionStorage",
+      "esperado": "Sin claves de autenticación en localStorage, sessionStorage ni cookies",
+      "obtenido": "claves tipo auth=[], cookies tipo auth=[]",
+      "estado": "APROBADA",
+      "evidencia": "/home/eder/Konny-s_Pizza/docs/evidencias/03-almacenamiento.json"
+    },
+    {
+      "id": "C4",
+      "accion": "Dejar la sesión sin actividad durante al menos 6 minutos",
+      "esperado": "Transcurrir el plazo sin eventos de usuario",
+      "obtenido": "Espera completada: 6 minutos 15 segundos sin interacción",
+      "estado": "APROBADA",
+      "evidencia": ""
+    },
+    {
+      "id": "C5",
+      "accion": "Comprobar que el sistema cierra la sesión automáticamente y el panel deja de estar disponible",
+      "esperado": "Formulario de acceso visible, panel oculto y aviso de cierre por inactividad",
+      "obtenido": "acceso visible=true, panel visible=false, aviso=\"Tu sesión administrativa se cerró por cinco minutos de inactividad. Vuelve a ingresar.\"",
+      "estado": "APROBADA",
+      "evidencia": "/home/eder/Konny-s_Pizza/docs/evidencias/05-sesion-expirada.png"
+    },
+    {
+      "id": "C6.1",
+      "accion": "Intentar recuperar la sesión mediante una interacción",
+      "esperado": "El panel sigue oculto y no se recupera la sesión",
+      "obtenido": "panel visible tras clic=false",
+      "estado": "APROBADA",
+      "evidencia": "/home/eder/Konny-s_Pizza/docs/evidencias/06-tras-interaccion.png"
+    },
+    {
+      "id": "C6.2",
+      "accion": "Intentar recuperar la sesión mediante una recarga",
+      "esperado": "Acceso visible, panel oculto, sin tokens y haySesionAdmin()=false",
+      "obtenido": "acceso visible=true, panel visible=false, claves tipo auth=[], cookies tipo auth=[], haySesionAdmin=false",
+      "estado": "APROBADA",
+      "evidencia": "/home/eder/Konny-s_Pizza/docs/evidencias/07-tras-recarga.png"
+    },
+    {
+      "id": "C7",
+      "accion": "Registrar capturas y resultados sin mostrar correo, contraseña ni tokens",
+      "esperado": "Capturas y JSON de evidencia sin datos sensibles",
+      "obtenido": "Capturas 01, 02, 05, 06 y 07; JSON 03; el formulario de acceso quedó vacío en las capturas",
+      "estado": "APROBADA",
+      "evidencia": "/home/eder/Konny-s_Pizza/docs/evidencias"
+    }
+  ]
+}
