@@ -33,6 +33,8 @@ La app no deja hacer dos reservas en la misma mesa a la misma hora. Lo revisa el
 
 ## Mockups
 
+### Mockups de alta fidelidad
+
 Diseño de las pantallas del cliente. Cada imagen es una vista previa; al hacer clic se abre completa (los archivos están en [`docs/mockup/cliente/`](docs/mockup/cliente/)).
 
 **Escritorio**
@@ -52,6 +54,18 @@ Diseño de las pantallas del cliente. Cada imagen es una vista previa; al hacer 
 | Cargando | Sin cupo ese día | Error de formulario | Lista vacía |
 |:---:|:---:|:---:|:---:|
 | <a href="docs/mockup/cliente/estado-cargando.png"><img src="docs/mockup/cliente/miniaturas/estado-cargando.jpg" alt="Estado: cargando" width="170"></a> | <a href="docs/mockup/cliente/estado-sin-cupo.png"><img src="docs/mockup/cliente/miniaturas/estado-sin-cupo.jpg" alt="Estado: sin cupo" width="170"></a> | <a href="docs/mockup/cliente/estado-error-formulario.png"><img src="docs/mockup/cliente/miniaturas/estado-error-formulario.jpg" alt="Estado: error de formulario" width="170"></a> | <a href="docs/mockup/cliente/estado-lista-vacia.png"><img src="docs/mockup/cliente/miniaturas/estado-lista-vacia.jpg" alt="Estado: lista vacía" width="170"></a> |
+
+### Mockups de baja fidelidad
+
+Bocetos iniciales que representan la estructura y distribución de las pantallas antes de aplicar el diseño visual final.
+
+**Cliente**
+
+[![Mockup de baja fidelidad del cliente](docs/mockup/baja-fidelidad/cliente/flujo-cliente.png)](docs/mockup/baja-fidelidad/cliente/flujo-cliente.png)
+
+**Administrador**
+
+[![Mockup de baja fidelidad del administrador](docs/mockup/baja-fidelidad/administrador/panel-administrativo.png)](docs/mockup/baja-fidelidad/administrador/panel-administrativo.png)
 
 ## Tecnologías
 
