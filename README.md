@@ -7,6 +7,13 @@ Antes, las reservas se hacían por llamada, WhatsApp o en persona, y eso causaba
 - **App desplegada:** <https://konys-pizza.vercel.app>
 - **Panel de administración:** <https://konys-pizza.vercel.app/admin>
 
+## Integrantes
+
+| Nombre                            | Código      |
+| --------------------------------- | ----------- |
+| Eder Rosadas De Oliveira Barrera  | 01240371014 |
+| María Fernanda Jaimes Manganiello | 01240371050 |
+
 ## Qué hace
 
 **Cliente (sin cuenta)**
@@ -125,9 +132,4 @@ Proyecto académico de Ingeniería de Software, Universidad de Santander (UDES).
 Hecho por Eder Rosadas De Oliveira Barrera.
 Konys Pizza es un negocio real de Bucaramanga. La carta de `datos-ejemplo.sql` sale de lo que publican en Rappi (precios de referencia de octubre de 2026); las mesas y reservas son de prueba.
 
-## Integrantes
 
-| Nombre | Código |
-| --- | --- |
-| Eder Rosadas De Oliveira Barrera | 01240371014 |
-| María Fernanda Jaimes Manganiello | 01240371050 |
